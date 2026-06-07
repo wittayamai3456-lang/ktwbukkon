@@ -1,0 +1,3350 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>เว็บไซต์กลุ่มบริหารงาน</title>
+<link rel="icon" id="favicon" href="data:,">
+
+<!-- ฟอนต์ไทย: Mitr (หัวข้อ) + Sarabun (เนื้อหา ฟอนต์ราชการ) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+<!-- Firebase (compat) ผ่าน CDN — ใช้ได้ในไฟล์เดียว ทำงานใน iframe ของ Google Sites -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<style>
+/* ============================================================
+   1) ตัวแปรธีม (CSS variables) — ผู้ดูแลแก้ค่าได้จากหน้าเว็บ
+   ค่าเริ่มต้น: เขียวสถาบัน + ทองอ่อน บนพื้นครีม (ทางการแต่อบอุ่น)
+   ============================================================ */
+:root{
+  --bg:#f6f2e9;
+  --surface:#fffdf8;
+  --ink:#22302a;
+  --muted:#6c7a72;
+  --primary:#1f4d3a;
+  --primary-2:#2c6a4f;
+  --accent:#c19a3e;
+  --line:#e6ddcc;
+  --radius:18px;
+  --shadow:0 18px 40px -22px rgba(31,77,58,.45);
+  --font-head:'Mitr',sans-serif;
+  --font-body:'Sarabun',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font-body);
+  color:var(--ink);
+  background:var(--bg);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4,.head{font-family:var(--font-head);font-weight:500;line-height:1.25}
+button{font-family:inherit;cursor:pointer}
+img{max-width:100%;display:block}
+a{color:var(--primary-2)}
+
+/* ============================================================
+   2) หน้า LANDING (จอแรก) — แอนิเมชันด้วย CSS ล้วน เบาๆ
+   ============================================================ */
+#landing{
+  position:fixed;inset:0;z-index:50;
+  display:flex;align-items:center;justify-content:center;
+  background:
+    radial-gradient(60% 70% at 18% 20%, rgba(44,106,79,.30), transparent 60%),
+    radial-gradient(55% 65% at 85% 80%, rgba(193,154,62,.28), transparent 60%),
+    linear-gradient(140deg,#16352a,#1f4d3a 55%,#16352a);
+  overflow:hidden;
+  transition:opacity .7s ease, visibility .7s ease;
+}
+#landing.hide{opacity:0;visibility:hidden;pointer-events:none}
+/* วงกลมเบลอลอยพื้นหลัง */
+#landing .orb{position:absolute;border-radius:50%;filter:blur(40px);opacity:.5;animation:float 12s ease-in-out infinite}
+#landing .orb.a{width:280px;height:280px;background:#3a8a64;top:-60px;left:-40px}
+#landing .orb.b{width:340px;height:340px;background:#d8b25a;bottom:-90px;right:-60px;animation-delay:-4s}
+#landing .orb.c{width:200px;height:200px;background:#2c6a4f;top:40%;left:60%;animation-delay:-8s}
+@keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-30px)}}
+.cover{
+  position:relative;text-align:center;color:#fff;padding:40px 28px;max-width:560px;
+}
+.cover .logo-ring{
+  width:104px;height:104px;margin:0 auto 26px;border-radius:50%;
+  display:grid;place-items:center;overflow:hidden;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);
+  backdrop-filter:blur(6px);
+  opacity:0;transform:translateY(16px);animation:rise .7s .1s forwards}
+.cover .logo-ring img{width:100%;height:100%;object-fit:cover}
+.cover .logo-ring span{font-family:var(--font-head);font-size:38px;color:#fff}
+.cover h1{font-size:clamp(28px,6vw,46px);font-weight:600;letter-spacing:.5px;
+  opacity:0;transform:translateY(16px);animation:rise .7s .25s forwards}
+.cover .tagline{margin-top:12px;font-size:clamp(15px,2.4vw,19px);color:rgba(255,255,255,.85);font-weight:300;
+  opacity:0;transform:translateY(16px);animation:rise .7s .4s forwards}
+.cover .line{width:60px;height:3px;background:var(--accent);margin:22px auto;border-radius:3px;
+  opacity:0;animation:fade .8s .55s forwards}
+.enter-btn{
+  margin-top:8px;border:none;border-radius:999px;padding:15px 38px;
+  font-family:var(--font-head);font-size:18px;color:#16352a;
+  background:linear-gradient(180deg,#f2d98a,var(--accent));
+  box-shadow:0 14px 30px -10px rgba(193,154,62,.7);
+  opacity:0;transform:translateY(16px);animation:rise .7s .7s forwards;
+  transition:transform .2s, box-shadow .2s}
+.enter-btn:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 18px 36px -10px rgba(193,154,62,.85)}
+@keyframes rise{to{opacity:1;transform:none}}
+@keyframes fade{to{opacity:1}}
+body.no-anim #landing .orb{animation:none}
+body.no-anim .cover *{animation:none!important;opacity:1!important;transform:none!important}
+
+/* ============================================================
+   3) โครงแอป (SPA)
+   ============================================================ */
+#app{min-height:100%;display:flex;flex-direction:column}
+.topbar{
+  position:sticky;top:0;z-index:20;background:var(--surface);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:14px;padding:12px 18px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand .badge{width:44px;height:44px;border-radius:12px;flex:0 0 auto;overflow:hidden;
+  display:grid;place-items:center;background:var(--primary);color:#fff;font-family:var(--font-head)}
+.brand .badge img{width:100%;height:100%;object-fit:cover}
+.brand .name{font-family:var(--font-head);font-size:18px;color:var(--primary);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand .sub{font-size:12px;color:var(--muted)}
+.topbar .spacer{flex:1}
+/* ช่องค้นหาเล็กบน topbar */
+.topsearch{height:34px;flex:0 0 auto;width:150px;max-width:34vw;border:1px solid var(--line);border-radius:999px;
+  padding:0 14px;font-size:13px;background:var(--surface);color:var(--ink);outline:none;transition:width .2s,border-color .2s,box-shadow .2s}
+.topsearch::placeholder{color:var(--muted)}
+.topsearch:focus{border-color:var(--primary);width:220px;box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 18%,transparent)}
+@media(max-width:560px){ .topsearch{width:38px;padding:0 10px} .topsearch:focus{width:54vw} }
+/* ช่องค้นหาภายในแท็บ */
+.tab-search{margin:2px 0 14px}
+.tab-search input{width:100%;max-width:440px;height:42px;border:1px solid var(--line);border-radius:12px;
+  padding:0 14px;font-size:14px;background:var(--surface);color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s}
+.tab-search input:focus{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 16%,transparent)}
+/* ผลการค้นหาทั้งเว็บ */
+.srch-res{display:flex;flex-direction:column;gap:8px;max-height:56vh;overflow:auto;margin-top:4px}
+.srch-item{display:flex;gap:12px;align-items:flex-start;padding:11px 13px;border:1px solid var(--line);
+  border-radius:12px;cursor:pointer;background:var(--surface);transition:.15s;text-align:left;width:100%;font:inherit;color:inherit}
+.srch-item:hover{border-color:var(--primary);background:color-mix(in srgb,var(--primary) 6%,var(--surface))}
+.srch-item .si-ic{font-size:20px;flex:0 0 auto;line-height:1.4}
+.srch-item .si-tab{font-size:11.5px;color:var(--primary);font-weight:700;margin-bottom:1px}
+.srch-item .si-t{font-weight:600;color:var(--ink)}
+.srch-item .si-s{font-size:12.5px;color:var(--muted);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gear{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);
+  background:transparent;color:var(--muted);font-size:18px;display:grid;place-items:center;transition:.2s;flex:0 0 auto}
+.gear+.gear{margin-left:8px}
+.gear:hover{color:var(--primary);border-color:var(--primary)}
+
+/* ประกาศสำคัญหน้าเว็บ */
+.announce{display:none;align-items:center;gap:10px;padding:11px 16px;background:var(--accent);
+  color:#3a2c08;font-size:14.5px;font-weight:600;line-height:1.5}
+.announce.show{display:flex}
+.announce .ann-ic{flex:0 0 auto;font-size:18px}
+.announce .ann-txt{flex:1;min-width:0}
+.announce .ann-x{flex:0 0 auto;border:none;background:rgba(0,0,0,.12);color:#3a2c08;border-radius:8px;
+  width:26px;height:26px;cursor:pointer;font-size:16px;line-height:1}
+.announce .ann-x:hover{background:rgba(0,0,0,.22)}
+
+/* QR modal */
+.qr-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.qr-canvas{background:#fff;padding:12px;border-radius:14px;border:1px solid var(--line);min-height:120px;
+  display:grid;place-items:center}
+.qr-canvas img,.qr-canvas canvas{display:block;border-radius:6px}
+.qr-url{width:100%;word-break:break-all;background:var(--bg);border:1px solid var(--line);
+  border-radius:10px;padding:10px 12px;font-size:13px;color:var(--muted)}
+.qr-acts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+/* คู่มือ */
+.guide{font-size:14.5px;line-height:1.7}
+.guide h4{font-family:var(--font-head);color:var(--primary);margin:14px 0 6px;font-size:16px}
+.guide ol{margin:0 0 4px;padding-left:20px}.guide ol li{margin-bottom:6px}
+.guide .step{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);
+  border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.guide .step .n{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;
+  display:grid;place-items:center;font-weight:700;font-size:13px}
+.guide .step .c{flex:1}.guide .step .c b{color:var(--primary)}
+.guide .tip{background:#fff7e6;border:1px solid #f0d9a0;border-radius:10px;padding:10px 12px;color:#7a5c10;font-size:13.5px}
+
+/* แถบแท็บ — ตรึงไว้ใต้แถบชื่อเมื่อเลื่อนหน้า */
+.tabbar{position:sticky;top:0;z-index:19;display:flex;gap:6px;overflow-x:auto;padding:10px 14px;background:var(--surface);
+  border-bottom:1px solid var(--line);scrollbar-width:thin;box-shadow:0 4px 10px -8px rgba(0,0,0,.35)}
+.tabbar::-webkit-scrollbar{height:6px}
+.tabbar::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
+.tab{flex:0 0 auto;border:none;background:transparent;color:var(--muted);
+  padding:9px 16px;border-radius:999px;font-size:15px;font-weight:500;white-space:nowrap;transition:.2s}
+.tab:hover{color:var(--ink);background:rgba(31,77,58,.06)}
+.tab.active{color:#fff;background:var(--primary)}
+.tab .x{margin-left:8px;opacity:.7;font-size:13px}
+.addtab{flex:0 0 auto;border:1px dashed var(--accent);background:transparent;color:var(--accent);
+  padding:8px 14px;border-radius:999px;font-size:14px;font-weight:500}
+
+/* พื้นที่เนื้อหา */
+.main{flex:1;width:100%;max-width:1040px;margin:0 auto;padding:26px 18px 60px}
+.section-head{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.section-head h2{font-size:24px;color:var(--primary);flex:1}
+.muted{color:var(--muted)}
+.empty{text-align:center;color:var(--muted);padding:48px 10px;border:1px dashed var(--line);border-radius:var(--radius)}
+
+/* hero หน้าหลัก */
+.hero{position:relative;border-radius:var(--radius);overflow:hidden;color:#fff;
+  background:linear-gradient(120deg,var(--primary),var(--primary-2));padding:42px 30px;margin-bottom:26px;box-shadow:var(--shadow)}
+.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;
+  background:rgba(255,255,255,.10)}
+.hero h2{color:#fff;font-size:clamp(22px,4vw,32px)}
+.hero p{margin-top:10px;max-width:560px;color:rgba(255,255,255,.9);font-weight:300}
+
+/* การ์ด (บุคลากร / การ์ดทั่วไป) */
+.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  overflow:hidden;box-shadow:var(--shadow);transition:transform .2s}
+.card:hover{transform:translateY(-3px)}
+.card .photo{aspect-ratio:1/1;background:#e9e2d2 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><circle cx="40" cy="30" r="16" fill="%23cdbfa0"/><rect x="14" y="52" width="52" height="26" rx="13" fill="%23cdbfa0"/></svg>') center/40% no-repeat;}
+.card .photo img{width:100%;height:100%;object-fit:cover}
+.card .body{padding:14px 16px}
+.card .body .t{font-family:var(--font-head);font-size:17px;color:var(--ink)}
+.card .body .r{color:var(--primary-2);font-size:14px;font-weight:600;margin-top:2px}
+.card .body .d{color:var(--muted);font-size:13px;margin-top:6px}
+.card.clickable{cursor:pointer;text-decoration:none;color:inherit;display:block}
+.card-btn{display:inline-block;margin-top:12px;background:var(--primary);color:#fff;
+  text-decoration:none;border-radius:8px;padding:8px 16px;font-size:13.5px;font-weight:600}
+.card-btn:hover{background:var(--primary-2)}
+
+/* ลิงก์ฟอร์ม */
+.linklist{display:flex;flex-direction:column;gap:14px}
+.linkrow{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+.linkrow .ic{width:44px;height:44px;border-radius:12px;flex:0 0 auto;display:grid;place-items:center;
+  background:rgba(193,154,62,.16);color:var(--accent);font-size:20px}
+.linkrow .info{flex:1;min-width:0}
+.linkrow .info .t{font-family:var(--font-head);font-size:16px}
+.linkrow .info .d{color:var(--muted);font-size:13px}
+.btn-go{border:none;background:var(--primary);color:#fff;border-radius:10px;padding:9px 16px;font-size:14px;text-decoration:none}
+.embed-wrap{margin-top:10px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.embed-wrap iframe{width:100%;height:520px;border:0;display:block}
+
+/* เอกสาร/ไฟล์ดาวน์โหลด */
+.filelist{display:flex;flex-direction:column;gap:14px}
+.filerow{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+.filerow .fic{width:48px;height:48px;border-radius:12px;flex:0 0 auto;display:grid;place-items:center;font-size:22px;color:#fff}
+.filerow .fic.pdf{background:#c0392b}.filerow .fic.doc{background:#2b6cb0}
+.filerow .fic.xls{background:#2f855a}.filerow .fic.ppt{background:#d35400}.filerow .fic.other{background:var(--muted)}
+.filerow .finfo{flex:1;min-width:0}
+.filerow .finfo .t{font-family:var(--font-head);font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.filerow .finfo .d{color:var(--muted);font-size:13px}
+.filerow .finfo .meta{color:var(--accent);font-size:12px;font-weight:600;margin-top:2px}
+.filerow .facts{display:flex;gap:8px;flex:0 0 auto;flex-wrap:wrap;align-items:center}
+.btn-dl{border:none;background:var(--primary);color:#fff;border-radius:10px;padding:9px 16px;font-size:14px;text-decoration:none;white-space:nowrap}
+.btn-dl:hover{background:var(--primary-2)}
+.btn-view{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:10px;padding:9px 14px;font-size:14px;text-decoration:none;white-space:nowrap}
+.btn-view:hover{border-color:var(--primary);color:var(--primary)}
+@media(max-width:560px){.filerow{flex-wrap:wrap}.filerow .facts{width:100%}}
+
+/* ข่าว */
+.newslist{display:flex;flex-direction:column;gap:18px}
+.news{display:flex;gap:18px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.news .nimg{width:200px;flex:0 0 auto;background:#e9e2d2}
+.news .nimg img{width:100%;height:100%;object-fit:cover}
+.news .nbody{padding:18px 20px;flex:1}
+.news .date{display:inline-block;font-size:12px;color:var(--accent);font-weight:600;letter-spacing:.5px}
+.news h3{font-size:19px;margin:4px 0 8px}
+.news p{color:var(--muted);font-size:14.5px;white-space:pre-wrap}
+@media(max-width:640px){.news{flex-direction:column}.news .nimg{width:100%;height:180px}}
+
+/* เนื้อหาอิสระ */
+.content-block{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:24px;box-shadow:var(--shadow);white-space:pre-wrap;font-size:15.5px}
+
+/* ปุ่มแก้ไขเล็กบนการ์ด */
+.item-tools{display:flex;gap:8px;padding:0 16px 14px}
+.mini{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 12px;font-size:13px;color:var(--muted)}
+.mini:hover{border-color:var(--primary);color:var(--primary)}
+.mini.del:hover{border-color:#c0392b;color:#c0392b}
+.add-pill{border:1px dashed var(--accent);background:transparent;color:var(--accent);
+  border-radius:12px;padding:14px;font-size:15px;width:100%;font-weight:500}
+
+/* แถบโหมดแก้ไข */
+#editbar{display:none;position:sticky;top:0;z-index:25;background:var(--accent);color:#3a2c08;
+  text-align:center;padding:8px 14px;font-size:14px;font-weight:600}
+#editbar button{margin-left:10px;border:none;background:#3a2c08;color:#fff;border-radius:8px;padding:6px 14px;font-size:13px}
+body.editing #editbar{display:block}
+
+/* ============================================================
+   4) Modal + ฟอร์ม
+   ============================================================ */
+.overlay{position:fixed;inset:0;z-index:60;background:rgba(20,30,25,.55);
+  display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(2px)}
+.overlay.show{display:flex}
+.modal{background:var(--surface);width:100%;max-width:460px;border-radius:20px;overflow:hidden;
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.5);max-height:90vh;display:flex;flex-direction:column}
+.modal .mhead{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center}
+.modal .mhead h3{font-size:18px;color:var(--primary);flex:1}
+.modal .mhead .close{border:none;background:transparent;font-size:22px;color:var(--muted)}
+.modal .mbody{padding:20px 22px;overflow:auto}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13.5px;color:var(--muted);margin-bottom:5px;font-weight:600}
+.field input[type=text],.field input[type=url],.field input[type=date],.field input[type=password],
+.field textarea,.field select{
+  width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-family:inherit;font-size:15px;background:#fff;color:var(--ink)}
+.field textarea{min-height:110px;resize:vertical}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--primary)}
+.field .hint{font-size:12px;color:var(--muted);margin-top:4px}
+.color-row{display:flex;gap:14px}
+.color-row .field{flex:1}
+.color-row input[type=color]{width:100%;height:42px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:4px}
+.uprow{display:flex;gap:10px;align-items:center}
+.uprow input[type=file]{font-size:13px;flex:1}
+.thumb{width:46px;height:46px;border-radius:8px;object-fit:cover;border:1px solid var(--line);display:none}
+.mfoot{padding:16px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end}
+.btn{border:none;border-radius:10px;padding:11px 20px;font-size:15px;font-weight:600}
+.btn.primary{background:var(--primary);color:#fff}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+
+/* แบนเนอร์แจ้งสถานะ (เช่น ยังไม่ตั้งค่า) */
+#status{display:none;background:#fff4d6;color:#7a5b10;border-bottom:1px solid #ecd9a0;
+  padding:9px 16px;font-size:13.5px;text-align:center}
+#status.show{display:block}
+
+/* loading skeleton */
+.sk{height:120px;border-radius:var(--radius);background:linear-gradient(90deg,#ece5d6,#f5efe2,#ece5d6);
+  background-size:200% 100%;animation:shimmer 1.3s infinite}
+@keyframes shimmer{to{background-position:-200% 0}}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:#fff;padding:11px 20px;border-radius:999px;font-size:14px;
+  opacity:0;transition:.3s;z-index:80}
+.toast.show{opacity:1;transform:translateX(-50%)}
+
+/* ============================================================
+   บล็อกเนื้อหา (หน้าหลัก) + ภาพกิจกรรม + lightbox
+   ============================================================ */
+.blocks{display:flex;flex-direction:column;gap:26px}
+.block-heading{font-family:var(--font-head);font-size:21px;color:var(--primary);margin-bottom:12px}
+.block-text{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:22px 24px;box-shadow:var(--shadow);white-space:pre-wrap;font-size:15.5px}
+.block-tools{display:flex;gap:8px;margin-top:10px}
+.block-wrap{position:relative}
+/* ลากจัดลำดับ */
+.dragging{opacity:.4}
+body.editing .tab{cursor:grab}
+body.editing .block-wrap{cursor:grab}
+body.editing .block-wrap::before{content:"⠿ ลาก/ใช้ ▲▼ จัดลำดับ";position:absolute;top:-9px;left:12px;z-index:6;
+  background:var(--accent);color:#3a2c08;font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;pointer-events:none}
+
+/* textbox พร้อมเอฟเฟค + label */
+.textbox{position:relative;border-radius:var(--radius);padding:20px 22px;font-size:15.5px;line-height:1.7;
+  margin-top:6px;animation:tbpop .35s ease}
+@keyframes tbpop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.textbox .tb-label{display:inline-block;font-family:var(--font-head);font-size:13px;font-weight:700;
+  padding:3px 12px;border-radius:999px;margin-bottom:10px}
+.textbox .tb-body{white-space:pre-wrap}
+.tb-info{background:#eaf4ff;border:1px solid #bcdcff;color:#16456e}
+.tb-info .tb-label{background:#2b6cb0;color:#fff}
+.tb-success{background:#e9f8ef;border:1px solid #b5e6c9;color:#1c6b3f}
+.tb-success .tb-label{background:#2f855a;color:#fff}
+.tb-warning{background:#fff7e6;border:1px solid #f0d9a0;color:#7a5c10}
+.tb-warning .tb-label{background:#d69e2e;color:#fff}
+.tb-danger{background:#fdecea;border:1px solid #f5b5ae;color:#9b2c22}
+.tb-danger .tb-label{background:#c0392b;color:#fff}
+.tb-highlight{background:linear-gradient(120deg,var(--primary),var(--accent));color:#fff;border:none;box-shadow:var(--shadow)}
+.tb-highlight .tb-label{background:rgba(255,255,255,.25);color:#fff}
+.tb-outline{background:transparent;border:2px dashed var(--primary);color:var(--ink)}
+.tb-outline .tb-label{background:var(--primary);color:#fff}
+.tb-glow{background:var(--surface);border:1px solid var(--primary);color:var(--ink);
+  box-shadow:0 0 0 1px var(--primary),0 0 22px -4px var(--primary)}
+.tb-glow .tb-label{background:var(--primary);color:#fff}
+.tb-soft{background:var(--surface);border:1px solid var(--line);color:var(--ink);box-shadow:0 14px 30px -16px rgba(0,0,0,.5)}
+.tb-soft .tb-label{background:var(--accent);color:#3a2c08}
+
+/* marquee อักษรเลื่อน */
+.marquee{overflow:hidden;white-space:nowrap;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);padding:11px 0;box-shadow:var(--shadow)}
+.mq-track{display:inline-block;white-space:nowrap;will-change:transform;
+  font-family:var(--font-head);font-size:16px;color:var(--primary);animation:mqmove linear infinite}
+.marquee:hover .mq-track{animation-play-state:paused}
+@keyframes mqmove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+/* ขนาดความกว้างของบล็อก (หน้าหลัก) */
+.blocks .block-wrap.size-sm{align-self:center;width:100%;max-width:560px}
+.blocks .block-wrap.size-md{align-self:center;width:100%;max-width:760px}
+.blocks .block-wrap.size-lg{align-self:center;width:100%;max-width:1000px}
+/* size-full = เต็มความกว้าง (ค่าเริ่มต้น) */
+.block-wrap .bw-tools{position:absolute;top:8px;right:8px;z-index:7;display:flex;gap:6px;
+  background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:10px;padding:5px;box-shadow:var(--shadow)}
+.block-wrap .bw-tools .mini{padding:6px 9px}
+.block-wrap .bw-tools .mini[disabled]{opacity:.3;cursor:default}
+
+/* รูปเดี่ยว */
+.single-img{border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--line);background:var(--surface)}
+.single-img img{width:100%;max-height:540px;object-fit:cover;display:block;cursor:zoom-in}
+.img-cap{padding:10px 16px;color:var(--muted);font-size:14px}
+
+/* แกลเลอรีรูป (grid + อัลบั้ม) */
+.gallery-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+.gtile{position:relative;border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:var(--shadow);
+  border:1px solid var(--line);background:#e9e2d2;aspect-ratio:4/3}
+.gtile img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.gtile:hover img{transform:scale(1.05)}
+.gtile .cap{position:absolute;left:0;right:0;bottom:0;padding:20px 12px 9px;color:#fff;font-size:13.5px;
+  background:linear-gradient(transparent,rgba(0,0,0,.65));font-weight:500}
+.gtile .count{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;font-size:12px;
+  padding:3px 10px;border-radius:999px}
+.gtile .tools{position:absolute;top:8px;left:8px;display:flex;gap:6px;z-index:2}
+.gtile .tools .mini{background:rgba(255,255,255,.92)}
+
+/* ปุ่มลิงก์เป็นแถว */
+.btnrow{display:flex;flex-wrap:wrap;gap:12px}
+.bigbtn{display:inline-flex;align-items:center;gap:8px;background:var(--primary);color:#fff;text-decoration:none;
+  padding:13px 24px;border-radius:12px;font-family:var(--font-head);font-size:15px;box-shadow:var(--shadow)}
+.bigbtn:hover{background:var(--primary-2)}
+
+/* ฝังสื่อ */
+.block-embed iframe{width:100%;height:460px;border:1px solid var(--line);border-radius:var(--radius);display:block}
+
+/* YouTube facade (ภาพปก + ปุ่มเล่น) — กันปัญหา error 153 ฝังไม่ขึ้น */
+.yt-box{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--radius);
+  overflow:hidden;border:1px solid var(--line)}
+.yt-box iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.yt-facade{position:absolute;inset:0;background-size:cover;background-position:center;cursor:pointer;
+  display:flex;align-items:center;justify-content:center}
+.yt-facade::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.18)}
+.yt-play{position:relative;z-index:2;width:78px;height:54px;border:none;border-radius:14px;
+  background:rgba(0,0,0,.72);cursor:pointer;transition:.2s}
+.yt-play::before{content:"";position:absolute;top:50%;left:50%;transform:translate(-35%,-50%);
+  border-style:solid;border-width:12px 0 12px 20px;border-color:transparent transparent transparent #fff}
+.yt-facade:hover .yt-play{background:#f00}
+.yt-open{position:absolute;right:10px;bottom:10px;z-index:3;color:#fff;font-size:12px;
+  background:rgba(0,0,0,.6);padding:5px 11px;border-radius:8px;text-decoration:none}
+.yt-open:hover{background:#f00}
+
+/* lightbox */
+.lightbox{position:fixed;inset:0;z-index:90;background:rgba(8,12,10,.93);display:none;
+  align-items:center;justify-content:center;flex-direction:column}
+.lightbox.show{display:flex}
+.lightbox img{max-width:92vw;max-height:80vh;object-fit:contain;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.lb-cap{color:#fff;margin-top:14px;font-size:15px;text-align:center;max-width:90vw;padding:0 12px}
+.lb-x{position:absolute;top:14px;right:18px;font-size:34px;color:#fff;background:none;border:none;line-height:1;cursor:pointer}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);font-size:28px;color:#fff;background:rgba(255,255,255,.14);
+  border:none;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;cursor:pointer}
+.lb-nav.prev{left:16px}.lb-nav.next{right:16px}
+.lb-nav:hover{background:rgba(255,255,255,.28)}
+.lb-count{position:absolute;top:18px;left:18px;color:#fff;font-size:14px;background:rgba(0,0,0,.4);padding:4px 12px;border-radius:999px}
+
+/* ตัวแก้ไขหลายรูป / หลายรายการ ในฟอร์ม */
+.editor-list{display:flex;flex-direction:column;gap:10px;margin-bottom:8px}
+.ed-photo{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:8px}
+.ed-photo img{width:54px;height:54px;border-radius:8px;object-fit:cover;flex:0 0 auto;background:#eee}
+.ed-photo .grow{flex:1;min-width:0;font-size:12.5px;color:var(--muted);word-break:break-all}
+.ed-row{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;background:#fff}
+.ed-row .ed-row-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);font-weight:600}
+.rm-btn{border:1px solid var(--line);background:#fff;color:#c0392b;border-radius:8px;padding:6px 10px;font-size:13px;flex:0 0 auto;cursor:pointer}
+.add-mini{border:1px dashed var(--accent);background:transparent;color:var(--accent);border-radius:10px;padding:9px;font-size:14px;width:100%;font-weight:500;margin-top:4px}
+
+/* cover รูปพื้นหลังหน้า Landing */
+#landing.has-cover{background:#16352a}
+#landing .cover-bg{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0}
+#landing .cover-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(160deg,rgba(16,53,42,.80),rgba(31,77,58,.60))}
+#landing.has-cover .orb{display:none}
+#landing .cover{position:relative;z-index:1}
+
+/* รูป Header แบนเนอร์ (อยู่เหนือแถบแท็บ) */
+.header-banner{display:none;width:100%;overflow:hidden;border-bottom:1px solid var(--line);
+  transition:filter .2s}
+.header-banner.show{display:block}
+.header-banner img{width:100%;max-height:320px;object-fit:cover;display:block}
+
+/* ===== แบนเนอร์ระบบ (แอนิเมชันแนว Technology) — สีอิงตามธีมผ่านตัวแปร --sb-* ===== */
+.sysbanner{position:relative;width:100%;height:clamp(160px,26vw,300px);overflow:hidden;
+  background:linear-gradient(120deg,var(--sb-b1,#06121f) 0%,var(--sb-b2,#0a2740) 35%,var(--sb-b3,#0e3a5c) 60%,var(--sb-b4,#13243f) 100%);
+  background-size:200% 200%;animation:sbShift 14s ease infinite}
+@keyframes sbShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+/* กริดเปอร์สเปกทีฟเลื่อนเข้าหาเรา */
+.sb-grid{position:absolute;left:0;right:0;top:-50%;bottom:0;
+  background-image:linear-gradient(var(--sb-grid,rgba(56,189,248,.22)) 1px,transparent 1px),
+                   linear-gradient(90deg,var(--sb-grid,rgba(56,189,248,.22)) 1px,transparent 1px);
+  background-size:42px 42px;transform:perspective(420px) rotateX(58deg);transform-origin:center top;
+  animation:sbGrid 6s linear infinite;opacity:.55}
+@keyframes sbGrid{from{background-position:0 0}to{background-position:0 42px}}
+/* ดวงแสงเรืองลอย */
+.sb-orb{position:absolute;border-radius:50%;filter:blur(42px);opacity:.55;mix-blend-mode:screen;pointer-events:none}
+.sb-orb1{width:260px;height:260px;background:var(--sb-o1,#22d3ee);left:-60px;top:-70px;animation:sbFloat1 12s ease-in-out infinite}
+.sb-orb2{width:240px;height:240px;background:var(--sb-o2,#7c3aed);right:-50px;top:20px;animation:sbFloat2 15s ease-in-out infinite}
+.sb-orb3{width:200px;height:200px;background:var(--sb-o3,#2563eb);left:40%;bottom:-90px;animation:sbFloat3 13s ease-in-out infinite}
+@keyframes sbFloat1{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,30px)}}
+@keyframes sbFloat2{0%,100%{transform:translate(0,0)}50%{transform:translate(-30px,25px)}}
+@keyframes sbFloat3{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-25px)}}
+/* จุดพาร์ติเคิลกะพริบ */
+.sb-dots{position:absolute;inset:0;pointer-events:none}
+.sb-dot{position:absolute;background:var(--sb-dot,#bae6fd);border-radius:50%;opacity:0;
+  box-shadow:0 0 8px 1px var(--sb-dotglow,rgba(186,230,253,.8));
+  animation-name:sbDot;animation-timing-function:ease-in-out;animation-iteration-count:infinite}
+@keyframes sbDot{0%{opacity:0;transform:translateY(8px)}25%{opacity:.9}50%{opacity:.3;transform:translateY(-8px)}75%{opacity:.9}100%{opacity:0;transform:translateY(8px)}}
+/* ลำแสงสแกนพาดผ่าน */
+.sb-scan{position:absolute;top:0;left:-50%;width:40%;height:100%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,var(--sb-scan,rgba(125,211,252,.18)),transparent);
+  transform:skewX(-18deg);animation:sbScan 7s linear infinite}
+@keyframes sbScan{0%{left:-50%}60%,100%{left:130%}}
+/* ข้อความกลางแบนเนอร์ */
+.sb-content{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:10px 16px;z-index:2}
+.sb-title{font-weight:800;line-height:1.15;font-size:clamp(22px,5vw,46px);letter-spacing:.5px;
+  text-shadow:0 0 18px var(--sb-tglow,rgba(56,189,248,.55)),0 2px 10px rgba(0,0,0,.4);
+  background:linear-gradient(90deg,var(--sb-t1,#e0f2fe),var(--sb-t2,#7dd3fc),var(--sb-t3,#a5b4fc),var(--sb-t1,#e0f2fe));background-size:200% auto;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  animation:sbText 6s linear infinite}
+@keyframes sbText{to{background-position:200% center}}
+.sb-tag{margin-top:8px;font-size:clamp(12px,2.2vw,17px);font-weight:600;color:var(--sb-t2,#bcd9ee);text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.sb-line{margin-top:14px;width:120px;height:3px;border-radius:3px;
+  background:linear-gradient(90deg,transparent,var(--sb-line1,#38bdf8),var(--sb-line2,#a78bfa),transparent);background-size:200% auto;
+  animation:sbText 4s linear infinite}
+@media (prefers-reduced-motion:reduce){
+  .sysbanner,.sb-grid,.sb-orb,.sb-dot,.sb-scan,.sb-title,.sb-line{animation:none!important}
+}
+
+/* Image Carousel (อัลบั้มหลายรูป) */
+.carousel{position:relative;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);
+  border:1px solid var(--line);background:#0b0f0d;-webkit-user-select:none;user-select:none}
+.car-track{display:flex;transition:transform .45s cubic-bezier(.4,0,.2,1)}
+.car-slide{min-width:100%;flex:0 0 100%}
+.car-slide img{width:100%;height:clamp(220px,46vw,470px);object-fit:cover;display:block;cursor:zoom-in}
+.car-slide.lnk img{cursor:pointer}
+.car-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;
+  border:none;background:rgba(0,0,0,.42);color:#fff;font-size:26px;display:grid;place-items:center;cursor:pointer;z-index:2}
+.car-nav:hover{background:rgba(0,0,0,.66)}.car-nav.prev{left:12px}.car-nav.next{right:12px}
+.car-dots{position:absolute;left:0;right:0;bottom:12px;display:flex;gap:8px;justify-content:center;z-index:2}
+.car-dots b{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.5);cursor:pointer;transition:.2s}
+.car-dots b.on{background:#fff;width:22px;border-radius:6px}
+.car-counter{position:absolute;top:10px;right:12px;background:rgba(0,0,0,.45);color:#fff;font-size:12px;
+  padding:3px 10px;border-radius:999px;z-index:2}
+
+/* บล็อก รูป/วิดีโอ + ข้อความจัดกลุ่ม (media + grouped text) */
+.mediatext{display:flex;gap:24px;align-items:center;width:100%}
+.mediatext>.mt-media{flex:1 1 56%;min-width:0;width:100%}
+.mediatext>.mt-text{flex:1 1 44%;min-width:0}
+.mediatext>.mt-media>img{width:100%;height:auto;border-radius:var(--radius);display:block;box-shadow:var(--shadow)}
+.mt-media.block-embed iframe,.mt-media iframe{width:100%}
+.mt-below,.mt-above{flex-direction:column;align-items:stretch}
+.mt-below{flex-direction:column}.mt-above{flex-direction:column-reverse}
+.mt-left{flex-direction:row-reverse}.mt-right{flex-direction:row}
+.mt-below>.mt-media,.mt-above>.mt-media,.mt-below>.mt-text,.mt-above>.mt-text{flex:1 1 auto;width:100%}
+.mt-title{font-family:var(--font-head);font-size:clamp(20px,3vw,28px);font-weight:800;color:var(--primary);
+  line-height:1.3;margin-bottom:10px}
+.mt-body{color:var(--ink);line-height:1.75;white-space:pre-wrap}
+@media(max-width:760px){
+  .mt-right,.mt-left{flex-direction:column;align-items:stretch}
+  .mediatext>.mt-media,.mediatext>.mt-text{flex:1 1 auto;width:100%}
+}
+
+/* Overlay แอนิเมชันกำลังอัปโหลด */
+.up-overlay{position:fixed;inset:0;z-index:100;background:rgba(18,28,22,.55);
+  display:none;align-items:center;justify-content:center}
+.up-overlay.show{display:flex}
+.up-card{background:#fff;border-radius:18px;padding:30px 40px;box-shadow:0 24px 70px rgba(0,0,0,.34);
+  display:flex;flex-direction:column;align-items:center;gap:14px;min-width:240px;max-width:84vw}
+.up-spin{width:56px;height:56px;border-radius:50%;border:5px solid var(--line);border-top-color:var(--primary);
+  animation:upspin .8s linear infinite}
+@keyframes upspin{to{transform:rotate(360deg)}}
+.up-text{font-family:var(--font-head);color:var(--primary);font-size:16px;text-align:center}
+.up-bar{width:100%;height:6px;border-radius:999px;background:var(--line);overflow:hidden}
+.up-bar i{display:block;height:100%;width:40%;background:var(--primary);border-radius:999px;animation:upbar 1.15s ease-in-out infinite}
+@keyframes upbar{0%{margin-left:-42%}100%{margin-left:102%}}
+
+/* ============================================================
+   5) เลย์เอาต์โหมดผู้ดูแล: 2 ฝั่ง (Workspace ซ้าย + Sidebar ขวา)
+   ============================================================ */
+.workspace{display:flex;flex-direction:column;flex:1;min-width:0}
+.sidebar{display:none}
+/* เมื่ออยู่ในโหมดแก้ไข: แบ่งจอเป็น 2 คอลัมน์ */
+body.editing #app{flex-direction:row;align-items:flex-start}
+body.editing .workspace{flex:1 1 auto;min-width:0}
+body.editing .sidebar{
+  display:flex;flex-direction:column;
+  flex:0 0 380px;width:380px;
+  position:sticky;top:0;align-self:flex-start;
+  height:100vh;max-height:100vh;
+  background:var(--surface);border-left:1px solid var(--line);
+  box-shadow:-14px 0 40px -28px rgba(31,77,58,.5);
+  z-index:18;
+}
+body.editing .sidebar.collapsed{display:none}
+/* หัว Sidebar */
+.sb-top{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:14px 16px;
+  background:linear-gradient(120deg,var(--primary),var(--primary-2));color:#fff}
+.sb-top .sb-title{flex:1;font-family:var(--font-head);font-size:16px;font-weight:500}
+.sb-top .sb-exit{border:none;background:rgba(255,255,255,.18);color:#fff;border-radius:9px;
+  padding:7px 14px;font-size:13.5px;font-weight:600;cursor:pointer}
+.sb-top .sb-exit:hover{background:rgba(255,255,255,.32)}
+/* พื้นที่เลื่อนของ Sidebar */
+.sb-scroll{flex:1;overflow-y:auto;padding:12px 12px 8px;scrollbar-width:thin}
+.sb-scroll::-webkit-scrollbar{width:8px}
+.sb-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+/* Accordion แต่ละหมวด */
+.sb-sec{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:11px;background:var(--bg)}
+.sb-head{width:100%;border:none;background:transparent;display:flex;align-items:center;gap:10px;
+  padding:13px 14px;font-family:var(--font-head);font-size:14.5px;color:var(--ink);cursor:pointer;transition:.15s}
+.sb-head:hover{background:rgba(31,77,58,.05)}
+.sb-head .sb-ic{flex:0 0 auto;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  background:rgba(193,154,62,.18);color:var(--accent);font-size:16px}
+.sb-head .sb-h-t{flex:1;text-align:left;font-weight:500}
+.sb-head .sb-chev{flex:0 0 auto;color:var(--muted);transition:transform .2s;font-size:13px}
+.sb-sec.open .sb-head{background:rgba(31,77,58,.06)}
+.sb-sec.open .sb-head .sb-chev{transform:rotate(180deg)}
+.sb-body{display:none;padding:6px 14px 16px;background:var(--surface);border-top:1px solid var(--line)}
+.sb-sec.open .sb-body{display:block;animation:sbslide .22s ease}
+@keyframes sbslide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+/* ฟอร์มภายใน Sidebar — กระชับกว่าใน modal */
+.sb-body .field{margin-bottom:11px}
+.sb-body .field label{font-size:12.5px}
+.sb-body .field input[type=text],.sb-body .field input[type=url],
+.sb-body .field input[type=password],.sb-body .field textarea,.sb-body .field select{
+  padding:9px 11px;font-size:14px}
+.sb-body .field textarea{min-height:70px}
+.sb-body .color-row{gap:10px}
+.sb-hint{font-size:12px;color:var(--muted);background:var(--bg);border:1px solid var(--line);
+  border-radius:10px;padding:9px 11px;margin:4px 0 10px;line-height:1.55}
+.sb-btn{border:none;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:600;
+  font-family:var(--font-body);cursor:pointer;width:100%}
+.sb-btn.primary{background:var(--primary);color:#fff}
+.sb-btn.primary:hover{background:var(--primary-2)}
+.sb-btn.ghost{background:var(--surface);color:var(--primary);border:1px solid var(--primary)}
+.sb-btn.ghost:hover{background:rgba(31,77,58,.06)}
+.sb-btn+.sb-btn{margin-top:8px}
+/* ตัวจัดการแท็บใน Sidebar */
+.sb-tabrow{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);
+  border-radius:11px;padding:7px 8px;margin-bottom:8px}
+.sb-tabrow .ttype{flex:0 0 auto;font-size:10.5px;font-weight:700;color:var(--accent);
+  background:rgba(193,154,62,.16);border-radius:999px;padding:3px 8px;white-space:nowrap}
+.sb-tabrow input.tname{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:13.5px;font-family:inherit;color:var(--ink)}
+.sb-tabrow input.tname:focus{outline:none;border-color:var(--primary)}
+.sb-tabrow .tact{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);color:var(--muted);
+  width:28px;height:28px;border-radius:8px;font-size:13px;cursor:pointer;display:grid;place-items:center}
+.sb-tabrow .tact:hover{border-color:var(--primary);color:var(--primary)}
+.sb-tabrow .tact.del:hover{border-color:#c0392b;color:#c0392b}
+.sb-tabrow .tact:disabled{opacity:.3;cursor:default}
+.sb-tabrow.is-active{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary)}
+.sb-addtab{border:1px dashed var(--accent);background:transparent;color:var(--accent);
+  border-radius:11px;padding:10px;font-size:14px;width:100%;font-weight:500;cursor:pointer;margin-top:4px}
+/* แถบบริบทเนื้อหาแท็บปัจจุบัน */
+.sb-ctx{background:linear-gradient(120deg,rgba(31,77,58,.1),rgba(193,154,62,.12));
+  border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:11px}
+.sb-ctx .lab{font-size:11.5px;color:var(--muted);font-weight:600}
+.sb-ctx .nm{font-family:var(--font-head);font-size:15.5px;color:var(--primary)}
+/* footer บันทึก (ตรึงล่าง Sidebar) */
+.sb-foot{flex:0 0 auto;padding:11px 14px;border-top:1px solid var(--line);background:var(--surface)}
+.sb-foot .sb-btn{box-shadow:var(--shadow)}
+/* ปุ่มลอยเปิด/ปิดแผง (มือถือ) */
+.sb-fab{display:none;position:fixed;right:16px;bottom:18px;z-index:71;border:none;cursor:pointer;
+  width:56px;height:56px;border-radius:50%;background:var(--primary);color:#fff;font-size:24px;
+  box-shadow:0 14px 30px -8px rgba(31,77,58,.7)}
+body.editing .sb-fab{display:grid;place-items:center}
+/* ปรับ z-index ให้ modal/แจ้งเตือนลอยเหนือ Sidebar เสมอ */
+.overlay{z-index:80}
+.up-overlay{z-index:110}
+.toast{z-index:120}
+.lightbox{z-index:95}
+
+/* มือถือ/จอแคบ: Sidebar กลายเป็นลิ้นชักเลื่อนจากขวา */
+@media(max-width:900px){
+  body.editing #app{flex-direction:column}
+  body.editing .workspace{flex:1 1 auto}
+  body.editing .sidebar{
+    position:fixed;top:0;right:0;bottom:0;left:auto;
+    width:min(370px,90vw);height:100vh;max-height:100vh;
+    transform:translateX(102%);transition:transform .26s ease;
+    z-index:75;box-shadow:-12px 0 44px -10px rgba(0,0,0,.45)}
+  body.editing .sidebar.open{transform:none}
+  body.editing .sidebar.collapsed{display:flex}
+}
+
+/* ============================================================
+   6) ข่าวสาร: จำกัดความสูง + อ่านเพิ่มเติม / ข่าวสดจาก RSS
+   ============================================================ */
+.news-body{white-space:pre-wrap;color:var(--muted);font-size:14.5px;line-height:1.6;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;overflow:hidden}
+.news-body.open{-webkit-line-clamp:unset;display:block;overflow:visible}
+.news-more{margin-top:8px;border:none;background:transparent;color:var(--primary);
+  font-family:var(--font-head);font-weight:500;font-size:14px;cursor:pointer;padding:0}
+.news-more:hover{text-decoration:underline}
+
+/* บล็อกข่าวสด (ดึงจาก RSS/เว็บอื่น) */
+.feed-block{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 20px;box-shadow:var(--shadow);margin-bottom:18px}
+.feed-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.feed-head .fh-ic{width:34px;height:34px;border-radius:10px;flex:0 0 auto;display:grid;place-items:center;
+  background:rgba(193,154,62,.16);color:var(--accent);font-size:18px}
+.feed-head .fh-t{flex:1;min-width:0;font-family:var(--font-head);font-size:18px;color:var(--primary)}
+.feed-head .fh-live{flex:0 0 auto;font-size:11px;font-weight:700;color:#fff;background:#c0392b;
+  border-radius:999px;padding:3px 10px;display:inline-flex;align-items:center;gap:5px}
+.feed-head .fh-live::before{content:"";width:7px;height:7px;border-radius:50%;background:#fff;
+  animation:fhpulse 1.4s ease-in-out infinite}
+@keyframes fhpulse{0%,100%{opacity:1}50%{opacity:.3}}
+.feed-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.fcard{display:flex;flex-direction:column;background:var(--bg);border:1px solid var(--line);
+  border-radius:14px;overflow:hidden;text-decoration:none;color:inherit;transition:transform .2s,box-shadow .2s}
+.fcard:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.fcard .fc-img{aspect-ratio:16/9;background:#e9e2d2;overflow:hidden}
+.fcard .fc-img img{width:100%;height:100%;object-fit:cover}
+.fcard .fc-b{padding:12px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.fcard .fc-src{font-size:11.5px;color:var(--accent);font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.fcard .fc-t{font-family:var(--font-head);font-size:15px;color:var(--ink);line-height:1.35;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.fcard .fc-d{font-size:13px;color:var(--muted);line-height:1.5;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.fcard .fc-go{margin-top:auto;font-size:12.5px;color:var(--primary-2);font-weight:600}
+.feed-skel{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:14px;padding:8px 2px}
+.feed-skel .sp{width:22px;height:22px;border-radius:50%;border:3px solid var(--line);
+  border-top-color:var(--primary);animation:upspin .8s linear infinite;flex:0 0 auto}
+.feed-err{background:#fdecea;border:1px solid #f5b5ae;color:#9b2c22;border-radius:10px;
+  padding:11px 13px;font-size:13.5px;line-height:1.55}
+
+/* ป้ายเวลาอัปเดต/แคชของข่าวสด */
+.feed-note{font-size:12px;color:var(--muted);margin-top:10px}
+.feed-note.cached{color:#7a5c10}
+
+/* ============================================================
+   7) บุคลากร: ขนาดการ์ด (เน้นตำแหน่ง) + จัดลำดับ
+   ============================================================ */
+.card{position:relative}
+/* ใหญ่ (เด่นเต็มแถว) — ภาพซ้าย ข้อมูลขวา เหมาะกับหัวหน้ากลุ่ม */
+.grid .card.size-lg{grid-column:1/-1;display:flex;align-items:stretch}
+.grid .card.size-lg .photo{width:min(260px,38%);aspect-ratio:auto;flex:0 0 auto}
+.grid .card.size-lg .body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:24px 28px}
+.grid .card.size-lg .body .t{font-size:clamp(20px,2.4vw,26px)}
+.grid .card.size-lg .body .r{font-size:17px;margin-top:4px}
+.grid .card.size-lg .body .d{font-size:14.5px;margin-top:8px}
+/* เล็ก (กะทัดรัด) */
+.grid .card.size-sm .photo{aspect-ratio:4/3}
+.grid .card.size-sm .body{padding:10px 12px}
+.grid .card.size-sm .body .t{font-size:15px}
+.grid .card.size-sm .body .r{font-size:13px}
+.grid .card.size-sm .body .d{font-size:12px}
+@media(max-width:560px){
+  .grid .card.size-lg{flex-direction:column}
+  .grid .card.size-lg .photo{width:100%;aspect-ratio:1/1}
+}
+/* แถบเครื่องมือบนการ์ด (โหมดแก้ไข) ลอยมุมขวาบน ไม่ดันเลย์เอาต์ */
+body.editing .item-tools{position:absolute;top:8px;right:8px;z-index:4;padding:5px;
+  background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:10px;
+  box-shadow:var(--shadow);display:flex;gap:5px;flex-wrap:wrap;max-width:170px}
+body.editing .item-tools .mini{padding:5px 9px}
+body.editing .item-tools .mini[disabled]{opacity:.3;cursor:default}
+body.editing .card .photo{min-height:90px}
+/* ขนาดการ์ดบุคลากร = กว้างจริงต่างกันด้วยการ span คอลัมน์ */
+.cards-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));grid-auto-flow:row dense}
+.cards-grid .card.size-sm{grid-column:span 1}
+.cards-grid .card.size-normal{grid-column:span 2}
+.cards-grid .card.size-lg{grid-column:1/-1}
+@media(max-width:560px){
+  .cards-grid{grid-template-columns:repeat(auto-fill,minmax(135px,1fr))}
+}
+/* หน้าที่/หมายเหตุ: ย่อ 3 บรรทัด + ปุ่มขยาย, เคาะบรรทัดได้ */
+.card .body .d.card-duty{white-space:pre-wrap;display:-webkit-box;-webkit-box-orient:vertical;
+  -webkit-line-clamp:3;overflow:hidden}
+.card .body .d.card-duty.open{-webkit-line-clamp:unset;display:block;overflow:visible}
+.card-more{margin-top:6px;border:none;background:transparent;color:var(--primary);
+  font-family:var(--font-head);font-weight:500;font-size:13px;cursor:pointer;padding:0;align-self:flex-start}
+.card-more:hover{text-decoration:underline}
+.card.size-sm .card-more{font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- ===================== หน้า LANDING ===================== -->
+<div id="landing">
+  <div class="cover-bg" id="coverBg"></div>
+  <div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
+  <div class="cover">
+    <div class="logo-ring" id="lLogo"><span>กบ</span></div>
+    <h1 id="lName">กลุ่มบริหารงาน</h1>
+    <div class="tagline" id="lTag">โรงเรียนของเรา</div>
+    <div class="line"></div>
+    <button class="enter-btn" id="enterBtn">เข้าสู่เว็บไซต์ →</button>
+  </div>
+</div>
+
+<!-- ===================== แอปหลัก ===================== -->
+<div id="app">
+  <div class="workspace" id="workspace">
+    <div id="editbar">
+      ✏️ โหมดผู้ดูแล — แก้ไขฝั่งซ้าย เห็นผลทันที
+      <button id="themeBtn">🎛️ แผงเครื่องมือ</button>
+      <button id="exitEdit">ออกจากโหมดแก้ไข</button>
+    </div>
+
+    <div id="status"></div>
+
+    <div class="topbar">
+      <div class="brand">
+        <div class="badge" id="tBadge">กบ</div>
+        <div style="min-width:0">
+          <div class="name" id="tName">กลุ่มบริหารงาน</div>
+          <div class="sub" id="tSub">โรงเรียนของเรา</div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <input id="siteSearch" class="topsearch" type="search" placeholder="ค้นหาในเว็บ" title="ค้นหาในเว็บ" autocomplete="off">
+      <button class="gear" id="guideBtn" title="คู่มือการตั้งค่า">❓</button>
+      <button class="gear" id="qrBtn" title="QR code / แชร์ลิงก์">🔳</button>
+      <button class="gear" id="gearBtn" title="ผู้ดูแล">⚙️</button>
+    </div>
+
+    <div id="announceBar" class="announce"></div>
+    <div class="header-banner" id="headerBanner"></div>
+    <div class="tabbar" id="tabbar"></div>
+    <div class="main" id="main"></div>
+  </div>
+
+  <!-- แผงเครื่องมือผู้ดูแล (Sticky Sidebar) -->
+  <aside class="sidebar" id="sidebar"></aside>
+</div>
+
+<!-- ปุ่มลอยเปิด/ปิดแผง (เฉพาะจอแคบ) -->
+<button class="sb-fab" id="sbFab" title="เปิด/ปิดแผงเครื่องมือ">🎛️</button>
+
+<!-- ===================== Modal กลาง ===================== -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="mhead"><h3 id="mTitle">หัวข้อ</h3><button class="close" id="mClose">×</button></div>
+    <div class="mbody" id="mBody"></div>
+    <div class="mfoot" id="mFoot"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ===================== Overlay กำลังอัปโหลด ===================== -->
+<div class="up-overlay" id="upOverlay">
+  <div class="up-card">
+    <div class="up-spin"></div>
+    <div class="up-text" id="upText">กำลังอัปโหลด…</div>
+    <div class="up-bar"><i></i></div>
+  </div>
+</div>
+
+<!-- ===================== Lightbox (ดูรูป/อัลบั้มสไลด์) ===================== -->
+<div class="lightbox" id="lightbox">
+  <button class="lb-x" id="lbClose">×</button>
+  <div class="lb-count" id="lbCount"></div>
+  <button class="lb-nav prev" id="lbPrev">‹</button>
+  <img id="lbImg" src="" alt="">
+  <button class="lb-nav next" id="lbNext">›</button>
+  <div class="lb-cap" id="lbCap"></div>
+</div>
+
+<script>
+/* ============================================================
+   ★★★ บล็อก CONFIG — แก้เฉพาะตรงนี้ต่อโรงเรียน/กลุ่มงาน ★★★
+   (ถ้าปล่อยว่าง เว็บจะรันใน "โหมดสาธิต" ด้วยข้อมูลตัวอย่างทันที)
+   ============================================================ */
+const CONFIG = {
+  // ★★★ แก้เฉพาะก้อนนี้ก้อนเดียวต่อโรงเรียน ★★★
+  // วาง Firebase config ของคุณที่นี่ (Project settings > Your apps)
+  // ถ้าปล่อยว่าง เว็บจะรันใน "โหมดสาธิต" ทันที
+  firebaseConfig: {
+    apiKey: "AIzaSyD9SM3oHHW6wI4hE77bqJkS2nCqmvMSOGw",
+    authDomain: "bukonktw2569.firebaseapp.com",
+    projectId: "bukonktw2569",
+    storageBucket: "bukonktw2569.firebasestorage.app",
+    messagingSenderId: "623734751306",
+    appId: "1:623734751306:web:4eca09d5b0915f8c9aa6b3"
+  }
+  // หมายเหตุ: โฟลเดอร์ Drive / Apps Script URL / Sheet ID / PIN
+  // ไม่ต้องแก้ในโค้ดแล้ว — ไปกรอกที่ "โหมดผู้ดูแล > ตั้งค่า" (เก็บใน Firestore)
+};
+const ADMIN_PIN_DEFAULT = "1234"; // PIN เริ่มต้นครั้งแรก (เปลี่ยนได้จากหน้าตั้งค่า)
+
+/* ============================================================
+   ชนิดของแท็บ -> วิธีแสดงผล (kind) และที่เก็บข้อมูล (store)
+   ============================================================ */
+const TAB_KINDS = {
+  home:      {kind:'content', label:'หน้าหลัก',      store:{doc:'content/home'}},
+  personnel: {kind:'card',    label:'บุคลากร',        store:{col:'personnel'}},
+  forms:     {kind:'link',    label:'แบบฟอร์ม',       store:{col:'forms'}},
+  news:      {kind:'news',    label:'ข่าวสาร/ประกาศ', store:{col:'news'}},
+  // ชนิดที่ผู้ดูแลเพิ่มเองได้:
+  content:   {kind:'content', label:'เนื้อหาอิสระ',   store:{docFromTab:true}},
+  cards:     {kind:'card',    label:'การ์ด/รายชื่อ',  store:{col:'items', filterTab:true}},
+  links:     {kind:'link',    label:'ลิงก์/ฟอร์ม',    store:{col:'linkitems', filterTab:true}},
+  files:     {kind:'file',    label:'เอกสาร/ไฟล์',    store:{col:'fileitems', filterTab:true}},
+  gallery:   {kind:'gallery', label:'ภาพกิจกรรม',     store:{col:'galleryitems', filterTab:true}},
+};
+
+/* ============================================================
+   ชั้นข้อมูล (Store) — รองรับ 2 โหมด
+   - firestore : เมื่อใส่ CONFIG.firebaseConfig.projectId แล้ว
+   - memory    : โหมดสาธิต (ข้อมูลตัวอย่างในหน่วยความจำ) เพื่อให้พรีวิวได้
+   ============================================================ */
+const HAS_FB = !!(CONFIG.firebaseConfig && CONFIG.firebaseConfig.projectId);
+let db = null;
+if (HAS_FB) {
+  try { firebase.initializeApp(CONFIG.firebaseConfig); db = firebase.firestore(); }
+  catch(e){ console.error('Firebase init error', e); }
+}
+
+const Store = {
+  mode: (HAS_FB && db) ? 'firestore' : 'memory',
+  mem: { docs:{}, cols:{personnel:[],forms:[],news:[],tabs:[],items:[],linkitems:[]}, n:0 },
+
+  // เมื่อ Firestore พัง (Rules ยังไม่ตั้ง / network error) ให้ fallback ลง memory
+  // แทนที่จะคืน null/[] เงียบๆ ซึ่งทำให้ loadTabs() พยายามเขียนแต่ก็พัง → ไม่มีแท็บ
+  _fallback(e, ret){ console.warn('[Store] Firestore error → fallback memory:', e?.code||e?.message||e); this.mode='memory'; return ret; },
+
+  async getDoc(path){
+    if(this.mode==='firestore'){
+      try{ const s=await db.doc(path).get(); return s.exists?s.data():null; }
+      catch(e){ return this._fallback(e, null); }
+    }
+    return this.mem.docs[path] ? {...this.mem.docs[path]} : null;
+  },
+  async setDoc(path,data){
+    if(this.mode==='firestore'){
+      try{ await db.doc(path).set(data,{merge:true}); return; }
+      catch(e){ this._fallback(e); }
+    }
+    this.mem.docs[path] = {...(this.mem.docs[path]||{}),...data};
+  },
+  async listCol(name){
+    if(this.mode==='firestore'){
+      try{ const s=await db.collection(name).get(); return s.docs.map(d=>({id:d.id,...d.data()})); }
+      catch(e){ return this._fallback(e, []); }
+    }
+    return (this.mem.cols[name]||[]).map(x=>({...x}));
+  },
+  async addCol(name,data){
+    if(this.mode==='firestore'){
+      try{ const r=await db.collection(name).add(data); return r.id; }
+      catch(e){ this._fallback(e); }
+    }
+    const id='m'+(++this.mem.n); (this.mem.cols[name]=this.mem.cols[name]||[]).push({id,...data}); return id;
+  },
+  async setColDoc(name,id,data){
+    if(this.mode==='firestore'){
+      try{ await db.collection(name).doc(id).set(data,{merge:true}); return; }
+      catch(e){ this._fallback(e); }
+    }
+    const a=this.mem.cols[name]=this.mem.cols[name]||[]; const i=a.findIndex(x=>x.id===id);
+    if(i>=0)a[i]={...a[i],...data}; else a.push({id,...data});
+  },
+  async updateCol(name,id,data){
+    if(this.mode==='firestore'){
+      try{ await db.collection(name).doc(id).update(data); return; }
+      catch(e){ this._fallback(e); }
+    }
+    const a=this.mem.cols[name]||[]; const i=a.findIndex(x=>x.id===id); if(i>=0)a[i]={...a[i],...data};
+  },
+  async removeCol(name,id){
+    if(this.mode==='firestore'){
+      try{ await db.collection(name).doc(id).delete(); return; }
+      catch(e){ this._fallback(e); }
+    }
+    this.mem.cols[name]=(this.mem.cols[name]||[]).filter(x=>x.id!==id);
+  },
+  async removeDoc(path){
+    if(this.mode==='firestore'){
+      try{ await db.doc(path).delete(); return; }
+      catch(e){ this._fallback(e); }
+    }
+    delete this.mem.docs[path];
+  }
+};
+
+/* ============================================================
+   สถานะรวมของแอป
+   ============================================================ */
+let SITE = {};       // ข้อมูลธีม/ชื่อ จาก content... จริงๆเก็บที่ config/site
+let TABS = [];        // รายการแท็บ
+let activeTab = null; // แท็บที่กำลังดู
+let editing = false;  // อยู่ในโหมดผู้ดูแลหรือไม่
+
+const $ = s => document.querySelector(s);
+
+/* ---------- ค่าเริ่มต้น + seed ครั้งแรก ---------- */
+async function loadSite(){
+  SITE = await Store.getDoc('config/site') || {};
+  // ค่าตั้งต้นถ้ายังว่าง
+  SITE.name    = SITE.name    || 'กลุ่มบริหารวิชาการ';
+  SITE.school  = SITE.school  || 'โรงเรียนของเรา';
+  SITE.tagline = SITE.tagline || 'ร่วมพัฒนาคุณภาพการศึกษา';
+  SITE.logo    = SITE.logo    || '';
+  SITE.cover   = SITE.cover   || '';   // รูปหน้าปก (พื้นหลังหน้า Landing)
+  SITE.header  = SITE.header  || '';   // รูป Header แบนเนอร์ (เหนือแท็บ ทุกหน้า)
+  SITE.headerBright = (SITE.headerBright==null?100:SITE.headerBright); // ความสว่าง banner (%)
+  SITE.headerSys = !!SITE.headerSys;   // ใช้ banner แอนิเมชันจากระบบ (แทนรูปอัปโหลด)
+  SITE.headerBgColor   = SITE.headerBgColor   || shade((SITE.primary||'#1f4d3a'),-45); // สีพื้นแบนเนอร์ระบบ
+  SITE.headerTextColor = SITE.headerTextColor || shade((SITE.primary||'#1f4d3a'),85);  // สีตัวอักษรแบนเนอร์ระบบ
+  SITE.announceOn   = !!SITE.announceOn;          // เปิด-ปิดประกาศสำคัญ
+  SITE.announceText = SITE.announceText || '';    // ข้อความประกาศสำคัญ
+  SITE.primary = SITE.primary || '#1f4d3a';
+  SITE.accent  = SITE.accent  || '#c19a3e';
+  SITE.font    = SITE.font    || 'Mitr';
+  SITE.anim    = (SITE.anim===undefined) ? true : SITE.anim;
+  SITE.pin     = SITE.pin     || ADMIN_PIN_DEFAULT;
+  SITE.driveFolderId = SITE.driveFolderId || '';  // โฟลเดอร์ Drive (เก็บรูป)
+  SITE.docFolderId   = SITE.docFolderId   || '';  // โฟลเดอร์ Drive (เก็บไฟล์เอกสาร PDF/Word/Excel)
+  SITE.gasUploadUrl  = SITE.gasUploadUrl  || '';  // Apps Script Web App URL
+  SITE.sheetId       = SITE.sheetId       || '';  // Google Sheet (สำรอง)
+}
+
+async function loadTabs(){
+  TABS = await Store.listCol('tabs');
+  // ★ แท็บเริ่มต้น 4 รายการ — seed ทันทีถ้ายังไม่ครบ (ไม่ว่าจะอ่านได้ 0, 1, 2, หรือ 3)
+  // กรณีที่พบ: Firestore write พังกลางคัน (Rules ยังไม่ได้ตั้ง) ทำให้บันทึกได้แค่บางแท็บ
+  const DEFAULTS=[
+    {type:'home',      title:'หน้าหลัก',          order:1},
+    {type:'personnel', title:'บุคลากรในกลุ่มงาน', order:2},
+    {type:'forms',     title:'แบบฟอร์ม',           order:3},
+    {type:'news',      title:'ข่าวสาร/ประกาศ',     order:4},
+  ];
+  const existingTypes=TABS.map(t=>t.type);
+  const missing=DEFAULTS.filter(d=>!existingTypes.includes(d.type));
+  if(missing.length>0){
+    // เติม memory ทันที — UI จะแสดงครบก่อน แล้วค่อย write Firestore เบื้องหลัง
+    missing.forEach((t,i)=>{
+      const id='_def'+(existingTypes.length+i+1);
+      Store.mem.cols.tabs.push({id,...t});
+      TABS.push({id,...t});
+    });
+    // write เฉพาะที่ขาดขึ้น Firestore แบบ non-blocking (ถ้าพัง UI ยังใช้ได้)
+    if(Store.mode==='firestore'){
+      (async()=>{
+        try{
+          for(const t of missing){
+            const ref=await db.collection('tabs').add(t);
+            const mi=Store.mem.cols.tabs.findIndex(x=>x.type===t.type&&x.order===t.order);
+            const ti=TABS.findIndex(x=>x.type===t.type&&x.order===t.order);
+            if(mi>=0) Store.mem.cols.tabs[mi].id=ref.id;
+            if(ti>=0) TABS[ti].id=ref.id;
+          }
+        }catch(e){ console.warn('[loadTabs] write missing tabs to Firestore failed:', e?.code||e?.message); }
+      })();
+    }
+  }
+  TABS.sort((a,b)=>(a.order||0)-(b.order||0));
+}
+
+/* ---------- ข้อมูลตัวอย่างสำหรับโหมดสาธิต ---------- */
+function seedDemo(){
+  Store.mem.cols.personnel=[
+    {id:'p1',name:'นายสมชาย ใจดี',role:'หัวหน้ากลุ่มงาน',duty:'กำกับดูแลภาพรวม',photo:'',order:1},
+    {id:'p2',name:'นางสาวมาลี ศรีสุข',role:'ครูชำนาญการ',duty:'งานทะเบียน-วัดผล',photo:'',order:2},
+    {id:'p3',name:'นายวีระ พากเพียร',role:'ครูผู้ช่วย',duty:'งานสารสนเทศ',photo:'',order:3},
+  ];
+  Store.mem.cols.forms=[
+    {id:'f1',title:'แบบฟอร์มขออนุญาตใช้ห้อง',desc:'สำหรับครูและบุคลากร',url:'https://forms.google.com',embed:'',order:1},
+    {id:'f2',title:'แบบประเมินความพึงพอใจ',desc:'ประจำภาคเรียน',url:'https://forms.google.com',embed:'',order:2},
+  ];
+  Store.mem.cols.news=[
+    {id:'n1',title:'ประกาศตารางสอบกลางภาค',date:'2026-05-20',body:'ขอแจ้งกำหนดการสอบกลางภาค ภาคเรียนที่ 1\nระหว่างวันที่ 1–5 มิถุนายน 2569',image:''},
+    {id:'n2',title:'ขอเชิญประชุมกลุ่มบริหารงาน',date:'2026-05-15',body:'เชิญบุคลากรทุกท่านเข้าร่วมประชุมประจำเดือน ณ ห้องประชุม',image:''},
+  ];
+  Store.mem.docs['content/home']={html:'ยินดีต้อนรับสู่เว็บไซต์กลุ่มบริหารงาน\n\nเว็บไซต์นี้รวบรวมข้อมูลบุคลากร แบบฟอร์ม และข่าวสารประกาศของกลุ่มงาน สามารถปรับแก้เนื้อหาได้เองผ่านโหมดผู้ดูแล (กดไอคอน ⚙️ มุมขวาบน)'};
+}
+
+/* ============================================================
+   ใช้ธีม (ตั้งค่า CSS variables จาก SITE)
+   ============================================================ */
+// สร้าง markup แบนเนอร์ระบบ (แอนิเมชันแนว tech + ชื่อเว็บกลางจอ) — สีเลือกเองโดยผู้ใช้
+function sysBannerHTML(){
+  const B=SITE.headerBgColor||'#0a2740', T=SITE.headerTextColor||'#7dd3fc';
+  // B = สีพื้น (ไล่เฉดรอบ ๆ ให้พื้นเคลื่อนไหว) | T = สีตัวอักษร+แสงเรือง (กริด/ดวงแสง/พาร์ติเคิล/เส้น)
+  const vars=[
+    '--sb-b1:'+shade(B,-22), '--sb-b2:'+B, '--sb-b3:'+shade(B,20), '--sb-b4:'+shade(B,-10),
+    '--sb-grid:'+hexA(T,0.22),
+    '--sb-o1:'+T, '--sb-o2:'+shade(T,28), '--sb-o3:'+shade(B,30),
+    '--sb-dot:'+shade(T,30), '--sb-dotglow:'+hexA(T,0.8),
+    '--sb-scan:'+hexA(T,0.20),
+    '--sb-t1:'+T, '--sb-t2:'+shade(T,42), '--sb-t3:'+shade(T,16),
+    '--sb-tglow:'+hexA(T,0.55),
+    '--sb-line1:'+T, '--sb-line2:'+shade(T,38)
+  ].join(';');
+  let dots='';
+  for(let i=0;i<18;i++){
+    const left=(Math.random()*100).toFixed(2), top=(Math.random()*100).toFixed(2);
+    const dur=(Math.random()*8+6).toFixed(2), delay=(Math.random()*6).toFixed(2), sz=(Math.random()*3+2).toFixed(1);
+    dots+=`<span class="sb-dot" style="left:${left}%;top:${top}%;width:${sz}px;height:${sz}px;animation-duration:${dur}s;animation-delay:-${delay}s"></span>`;
+  }
+  const nm=esc(SITE.name||''), tg=esc(SITE.tagline||'');
+  return `<div class="sysbanner" style="${vars}">
+    <div class="sb-grid"></div>
+    <div class="sb-orb sb-orb1"></div><div class="sb-orb sb-orb2"></div><div class="sb-orb sb-orb3"></div>
+    <div class="sb-dots">${dots}</div>
+    <div class="sb-scan"></div>
+    <div class="sb-content">
+      <div class="sb-title">${nm}</div>
+      ${tg?`<div class="sb-tag">${tg}</div>`:''}
+      <div class="sb-line"></div>
+    </div>
+  </div>`;
+}
+function applyTheme(){
+  const r=document.documentElement.style;
+  r.setProperty('--primary',SITE.primary);
+  r.setProperty('--primary-2',shade(SITE.primary,18));
+  r.setProperty('--accent',SITE.accent);
+  r.setProperty('--font-head',`'${SITE.font}',sans-serif`);
+  document.body.classList.toggle('no-anim', !SITE.anim);
+  // หัวเว็บ + landing
+  $('#lName').textContent=SITE.name; $('#lTag').textContent=SITE.tagline;
+  $('#tName').textContent=SITE.name; $('#tSub').textContent=SITE.school;
+  const initials=(SITE.name||'กบ').replace('กลุ่มบริหาร','').trim().slice(0,2)||'กบ';
+  if(SITE.logo){
+    $('#tBadge').innerHTML=imgTag(SITE.logo);
+    $('#lLogo').innerHTML=imgTag(SITE.logo);
+  }else{
+    $('#tBadge').textContent=initials; $('#lLogo').innerHTML=`<span>${initials}</span>`;
+  }
+  // รูปหน้าปก (cover) — พื้นหลังหน้า Landing
+  const cb=$('#coverBg'), land=$('#landing');
+  if(SITE.cover){ cb.style.backgroundImage=`url('${normImg(SITE.cover)}')`; land.classList.add('has-cover'); }
+  else { cb.style.backgroundImage=''; land.classList.remove('has-cover'); }
+  // รูป Header แบนเนอร์ (เหนือแท็บ) + ความสว่าง
+  const hb=$('#headerBanner');
+  if(SITE.headerSys){                       // โหมดแบนเนอร์ระบบ (แอนิเมชัน)
+    hb.innerHTML=sysBannerHTML(); hb.classList.add('show');
+    hb.style.filter='';                     // แอนิเมชันปรับแสงในตัวแล้ว ไม่ใช้สไลเดอร์
+  } else if(SITE.header){                    // โหมดรูปอัปโหลด
+    hb.innerHTML=imgTag(SITE.header); hb.classList.add('show');
+    hb.style.filter='brightness('+((SITE.headerBright||100)/100)+')';
+  } else { hb.innerHTML=''; hb.classList.remove('show'); hb.style.filter=''; }
+  // favicon = โลโก้
+  const fav=$('#favicon');
+  if(fav) fav.href = SITE.logo ? normImg(SITE.logo) : 'data:,';
+  // ประกาศสำคัญหน้าเว็บ
+  renderAnnounce();
+}
+// แสดง/ซ่อนแถบประกาศสำคัญ
+let announceDismissed=false;
+function renderAnnounce(){
+  const a=$('#announceBar');
+  if(SITE.announceOn && (SITE.announceText||'').trim() && !announceDismissed){
+    a.innerHTML=`<span class="ann-ic">📢</span><span class="ann-txt">${esc(SITE.announceText)}</span>
+      <button class="ann-x" id="annX" title="ปิด">×</button>`;
+    a.classList.add('show');
+    const x=$('#annX'); if(x) x.onclick=()=>{ announceDismissed=true; a.classList.remove('show'); a.innerHTML=''; setTimeout(stickyLayout,0); };
+  } else { a.classList.remove('show'); a.innerHTML=''; }
+}
+// ทำสีให้เข้มขึ้น/อ่อนลงเล็กน้อย
+function shade(hex,p){
+  try{const n=parseInt(hex.slice(1),16);let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  r=Math.min(255,Math.round(r+(255-r)*p/100));g=Math.min(255,Math.round(g+(255-g)*p/100));b=Math.min(255,Math.round(b+(255-b)*p/100));
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);}catch(e){return hex;}
+}
+// hex -> rgba(...) ตามค่าความโปร่งใส a (0-1)
+function hexA(hex,a){
+  try{const n=parseInt(hex.slice(1),16);return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';}
+  catch(e){return hex;}
+}
+
+/* ============================================================
+   แถบแท็บ
+   ============================================================ */
+function renderTabs(){
+  const bar=$('#tabbar'); bar.innerHTML='';
+  TABS.forEach(t=>{
+    const b=document.createElement('button');
+    b.className='tab'+(activeTab&&activeTab.id===t.id?' active':'');
+    b.dataset.id=t.id;
+    b.innerHTML=esc(t.title)+(editing&&t.type!=='home'?` <span class="x" title="ลบแท็บ">✕</span>`:'');
+    b.onclick=(e)=>{
+      if(e.target.classList.contains('x')){ e.stopPropagation(); deleteTab(t); return; }
+      activeTab=t; renderTabs(); renderMain(); if(editing) renderSidebar();
+    };
+    bar.appendChild(b);
+  });
+  if(editing){
+    const add=document.createElement('button');
+    add.className='addtab'; add.textContent='+ เพิ่มแท็บ';
+    add.onclick=openAddTab; bar.appendChild(add);
+    // ลากจัดลำดับแท็บได้
+    enableDragSort(bar,'.tab','x',ids=>reorderTabs(ids));
+  }
+}
+// ===== ลากจัดลำดับ (ใช้ได้ทั้งแท็บแนวนอน และบล็อกแนวตั้ง) =====
+function enableDragSort(container,itemSel,axis,onReorder){
+  let drag=null;
+  const list=()=>[...container.querySelectorAll(itemSel)];
+  list().forEach(el=>{
+    el.setAttribute('draggable','true');
+    el.addEventListener('dragstart',e=>{ drag=el; el.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move'; try{e.dataTransfer.setData('text/plain','');}catch(_){}; });
+    el.addEventListener('dragend',()=>{ if(!drag)return; drag.classList.remove('dragging'); drag=null;
+      const ids=list().map(x=>x.dataset.id).filter(Boolean); onReorder(ids); });
+  });
+  container.addEventListener('dragover',e=>{
+    if(!drag) return; e.preventDefault();
+    const after=dragAfter(container,itemSel,axis,e.clientX,e.clientY);
+    const addBtn=container.querySelector('.addtab');
+    if(after==null){ if(addBtn) container.insertBefore(drag,addBtn); else container.appendChild(drag); }
+    else container.insertBefore(drag,after);
+  });
+}
+function dragAfter(container,itemSel,axis,x,y){
+  const els=[...container.querySelectorAll(itemSel+':not(.dragging)')];
+  let best={offset:-Infinity,el:null};
+  els.forEach(el=>{ const r=el.getBoundingClientRect();
+    const off = axis==='x' ? (x-r.left-r.width/2) : (y-r.top-r.height/2);
+    if(off<0 && off>best.offset) best={offset:off,el}; });
+  return best.el;
+}
+async function reorderTabs(ids){
+  for(let i=0;i<ids.length;i++){ const t=TABS.find(x=>x.id===ids[i]);
+    if(t && t.order!==i){ t.order=i; await Store.updateCol('tabs',t.id,{order:i}); } }
+  TABS.sort((a,b)=>(a.order||0)-(b.order||0));
+  renderTabs();
+}
+async function reorderBlocks(col,ids){
+  for(let i=0;i<ids.length;i++){ await Store.updateCol(col,ids[i],{order:i}); }
+  await rerenderPreserveScroll();
+}
+// เรนเดอร์ใหม่โดยคงตำแหน่งเลื่อนหน้าเดิม (ไม่เด้งขึ้นบนสุด)
+async function rerenderPreserveScroll(){
+  const y=window.scrollY;
+  await renderMain(true);              // true = ไม่ต้องโชว์ skeleton (กันหน้าหด→เด้ง)
+  requestAnimationFrame(()=>window.scrollTo(0,y));
+  setTimeout(()=>window.scrollTo(0,y),60);   // กันกรณีรูป/เลย์เอาต์ขยับเล็กน้อย
+}
+// เลื่อนบล็อกขึ้น/ลงทีละตำแหน่ง (ง่ายกว่าการลาก)
+function moveBlock(col,ids,id,dir){
+  const i=ids.indexOf(id); if(i<0) return;
+  const j=i+dir; if(j<0||j>=ids.length) return;
+  const t=ids[i]; ids[i]=ids[j]; ids[j]=t;
+  reorderBlocks(col,ids);
+}
+
+/* ============================================================
+   แสดงเนื้อหาตามแท็บ
+   ============================================================ */
+async function renderMain(noSkeleton){
+  const m=$('#main');
+  if(!activeTab){ m.innerHTML=''; return; }
+  if(!noSkeleton) m.innerHTML='<div class="sk"></div>';   // คงเนื้อหาเดิมไว้ระหว่างโหลด ถ้า noSkeleton
+  const kind=TAB_KINDS[activeTab.type].kind;
+  try{
+    if(activeTab.type==='home') await renderHome(m);
+    else if(kind==='content') await renderContent(m);
+    else if(kind==='card') await renderCards(m);
+    else if(kind==='link') await renderLinks(m);
+    else if(kind==='file') await renderFiles(m);
+    else if(kind==='gallery') await renderGallery(m);
+    else if(kind==='news') await renderNews(m);
+  }catch(e){ console.error(e); m.innerHTML='<div class="empty">โหลดข้อมูลไม่สำเร็จ</div>'; }
+}
+
+/* ----- เนื้อหาอิสระ (แท็บที่สร้างใหม่) — ใช้ระบบบล็อกเต็มเหมือนหน้าหลัก ----- */
+async function renderContent(m){
+  // หน้าหลัก (type==='home') ถูกจัดการโดย renderHome แล้ว ที่นี่คือแท็บเนื้อหาอิสระของผู้ใช้
+  return renderBlocks(m,'tabblocks',{filterTab:true, legacyPath:'content/'+activeTab.id});
+}
+
+/* ----- การ์ดบุคลากร / การ์ดทั่วไป ----- */
+async function renderCards(m){
+  const col=TAB_KINDS[activeTab.type].store.col;
+  let items=await Store.listCol(col);
+  if(TAB_KINDS[activeTab.type].store.filterTab) items=items.filter(i=>i.tabId===activeTab.id);
+  items.sort((a,b)=>(a.order||0)-(b.order||0));
+  let html=`<div class="section-head"><h2>${esc(activeTab.title)}</h2></div>`;
+  if(items.length===0 && !editing) html+=`<div class="empty">ยังไม่มีรายการ</div>`;
+  html+=`<div class="grid cards-grid">`;
+  const ids=items.map(x=>x.id);
+  items.forEach((it,idx)=>{
+    const link=it.link?normUrl(it.link):'';
+    const mode=it.linkMode||'none';
+    const asLink=link && mode==='card' && !editing;   // กดทั้งใบ (เฉพาะตอนไม่แก้ไข)
+    const tag=asLink?'a':'div';
+    const linkAttr=asLink?` href="${link}" target="_blank" rel="noopener"`:'';
+    const size=it.size||'normal';
+    const up = idx>0            ? `<button class="mini" data-up="${it.id}" title="เลื่อนขึ้น">▲</button>`   : `<button class="mini" disabled>▲</button>`;
+    const dn = idx<items.length-1 ? `<button class="mini" data-down="${it.id}" title="เลื่อนลง">▼</button>` : `<button class="mini" disabled>▼</button>`;
+    html+=`<${tag} class="card size-${size}${asLink?' clickable':''}" data-id="${it.id}"${linkAttr}>
+      <div class="photo">${it.photo?imgTag(it.photo):''}</div>
+      <div class="body"><div class="t">${esc(it.name||'')}</div>
+        ${it.role?`<div class="r">${esc(it.role)}</div>`:''}
+        ${it.duty?`<div class="d card-duty">${esc(it.duty)}</div><button class="card-more" type="button">เพิ่มเติม ▼</button>`:''}
+        ${link&&mode==='button'?`<a class="card-btn" href="${link}" target="_blank" rel="noopener">${esc(it.linkLabel||'เปิด')}</a>`:''}</div>
+      ${editing?`<div class="item-tools">${up}${dn}
+        <button class="mini" data-edit="${it.id}">แก้ไข</button>
+        <button class="mini del" data-del="${it.id}">ลบ</button></div>`:''}
+    </${tag}>`;
+  });
+  html+=`</div>`;
+  if(editing) html+=`<div style="margin-top:18px"><button class="add-pill" id="addCard">+ เพิ่มรายการ</button></div>`;
+  m.innerHTML=html;
+  // ย่อ/ขยายหน้าที่ (แสดงปุ่มเฉพาะอันที่เนื้อหายาวเกิน)
+  m.querySelectorAll('.card-duty').forEach(d=>{
+    const btn=d.parentElement.querySelector('.card-more'); if(!btn) return;
+    if(d.scrollHeight-d.clientHeight<4){ btn.style.display='none'; }
+    else btn.onclick=(e)=>{ e.preventDefault(); e.stopPropagation();
+      const o=d.classList.toggle('open'); btn.textContent=o?'ย่อ ▲':'เพิ่มเติม ▼'; };
+  });
+  if(editing){
+    $('#addCard').onclick=()=>cardForm(col,null);
+    m.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>cardForm(col,items.find(x=>x.id===b.dataset.edit)));
+    m.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>confirmDel(col,b.dataset.del));
+    m.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>moveBlock(col,ids.slice(),b.dataset.up,-1));
+    m.querySelectorAll('[data-down]').forEach(b=>b.onclick=()=>moveBlock(col,ids.slice(),b.dataset.down,1));
+  }
+}
+
+/* ----- ลิงก์ฟอร์ม / ลิงก์ทั่วไป ----- */
+async function renderLinks(m){
+  const col=TAB_KINDS[activeTab.type].store.col;
+  let items=await Store.listCol(col);
+  if(TAB_KINDS[activeTab.type].store.filterTab) items=items.filter(i=>i.tabId===activeTab.id);
+  items.sort((a,b)=>(a.order||0)-(b.order||0));
+  // เอกสาร/ไฟล์ ที่แนบในแท็บนี้ (เก็บแยกในคอลเลกชัน fileitems ผูกกับ tabId)
+  let files=await Store.listCol('fileitems');
+  files=files.filter(i=>i.tabId===activeTab.id);
+  files.sort((a,b)=>(a.order||0)-(b.order||0));
+
+  let html=`<div class="section-head"><h2>${esc(activeTab.title)}</h2></div>`;
+  if(items.length===0 && files.length===0 && !editing) html+=`<div class="empty">ยังไม่มีรายการ</div>`;
+  html+=`<div class="linklist">`;
+  items.forEach(it=>{
+    html+=`<div>
+      <div class="linkrow"><div class="ic">📄</div>
+        <div class="info"><div class="t">${esc(it.title||'')}</div>
+          ${it.desc?`<div class="d">${esc(it.desc)}</div>`:''}</div>
+        ${it.url?`<a class="btn-go" href="${it.url}" target="_blank" rel="noopener">เปิด</a>`:''}
+        ${editing?`<button class="mini" data-edit="${it.id}">แก้ไข</button>
+          <button class="mini del" data-del="${it.id}">ลบ</button>`:''}
+      </div>
+      ${it.embed?`<div class="embed-wrap">${embedHtml(it.embed)}</div>`:''}
+    </div>`;
+  });
+  html+=`</div>`;
+  // ----- ส่วนเอกสาร/ไฟล์ดาวน์โหลดในแท็บแบบฟอร์ม -----
+  if(files.length){
+    html+=`<div class="filelist" style="margin-top:18px">`;
+    files.forEach(it=>{
+      const k=fileKind(it.fileName,it.fileType);
+      const view=it.fileId?`https://drive.google.com/file/d/${it.fileId}/view`:'';
+      const dl  =it.fileId?`https://drive.google.com/uc?export=download&id=${it.fileId}`:'';
+      const meta=[k.label, fileSize(it.fileSize)].filter(Boolean).join(' • ');
+      html+=`<div class="filerow">
+        <div class="fic ${k.cls}">${k.ic}</div>
+        <div class="finfo">
+          <div class="t">${esc(it.title||it.fileName||'ไฟล์')}</div>
+          ${it.desc?`<div class="d">${esc(it.desc)}</div>`:''}
+          ${meta?`<div class="meta">${esc(meta)}</div>`:''}
+        </div>
+        <div class="facts">
+          ${view?`<a class="btn-view" href="${view}" target="_blank" rel="noopener">เปิดดู</a>`:''}
+          ${dl?`<a class="btn-dl" href="${dl}" target="_blank" rel="noopener">ดาวน์โหลด</a>`:''}
+          ${editing?`<button class="mini" data-fedit="${it.id}">แก้ไข</button>
+            <button class="mini del" data-fdel="${it.id}">ลบ</button>`:''}
+        </div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+  if(editing) html+=`<div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="add-pill" id="addLink">+ เพิ่มฟอร์ม/ลิงก์</button>
+      <button class="add-pill" id="addFile">+ เพิ่มเอกสาร/ไฟล์</button></div>`;
+  m.innerHTML=html;
+  bindEmbeds(m);
+  if(editing){
+    $('#addLink').onclick=()=>linkForm(col,null);
+    $('#addFile').onclick=()=>fileForm('fileitems',null);
+    m.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>linkForm(col,items.find(x=>x.id===b.dataset.edit)));
+    m.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>confirmDel(col,b.dataset.del));
+    m.querySelectorAll('[data-fedit]').forEach(b=>b.onclick=()=>fileForm('fileitems',files.find(x=>x.id===b.dataset.fedit)));
+    m.querySelectorAll('[data-fdel]').forEach(b=>b.onclick=()=>confirmDel('fileitems',b.dataset.fdel));
+  }
+}
+
+/* ----- เอกสาร/ไฟล์ดาวน์โหลด ----- */
+// แยกชนิดไฟล์จากชื่อ/ประเภท เพื่อเลือกไอคอนและสี
+function fileKind(name,type){
+  const s=((name||'')+' '+(type||'')).toLowerCase();
+  // ตรวจตามนามสกุล/คำเฉพาะที่ "ไม่ชนกัน" ก่อน
+  // หมายเหตุ: mime ของ Office (xlsx/pptx/docx) ล้วนมีคำว่า "officedocument" จึงห้ามใช้คำว่า document มาตัดสิน
+  if(/\.pdf\b|\/pdf/.test(s))                                  return {cls:'pdf', ic:'📕', label:'PDF'};
+  if(/\.xlsx?\b|\.csv\b|excel|spreadsheet/.test(s))           return {cls:'xls', ic:'📗', label:'Excel'};
+  if(/\.pptx?\b|powerpoint|presentation/.test(s))             return {cls:'ppt', ic:'📙', label:'PowerPoint'};
+  if(/\.docx?\b|msword|wordprocessing|word/.test(s))          return {cls:'doc', ic:'📘', label:'Word'};
+  return {cls:'other', ic:'📄', label:'ไฟล์'};
+}
+// แปลงขนาดไฟล์ให้อ่านง่าย
+function fileSize(b){ if(!b) return ''; const u=['B','KB','MB','GB']; let i=0,n=b;
+  while(n>=1024&&i<u.length-1){n/=1024;i++;} return n.toFixed(n<10&&i>0?1:0)+' '+u[i]; }
+
+async function renderFiles(m){
+  const col=TAB_KINDS[activeTab.type].store.col;
+  let items=await Store.listCol(col);
+  if(TAB_KINDS[activeTab.type].store.filterTab) items=items.filter(i=>i.tabId===activeTab.id);
+  items.sort((a,b)=>(a.order||0)-(b.order||0));
+  let html=`<div class="section-head"><h2>${esc(activeTab.title)}</h2></div>`;
+  if(items.length===0 && !editing) html+=`<div class="empty">ยังไม่มีไฟล์เอกสาร</div>`;
+  if(items.length) html+=`<div class="tab-search"><input type="search" id="fileSearch" placeholder="🔍 ค้นหาเอกสารในแท็บนี้ (ชื่อ/ชนิด/คำอธิบาย)" autocomplete="off"></div>`;
+  html+=`<div class="filelist">`;
+  items.forEach(it=>{
+    const k=fileKind(it.fileName,it.fileType);
+    const view=it.fileId?`https://drive.google.com/file/d/${it.fileId}/view`:'';
+    const dl  =it.fileId?`https://drive.google.com/uc?export=download&id=${it.fileId}`:'';
+    const meta=[k.label, fileSize(it.fileSize)].filter(Boolean).join(' • ');
+    const stext=`${it.title||''} ${it.fileName||''} ${it.desc||''} ${k.label}`.toLowerCase();
+    html+=`<div class="filerow" data-s="${attr(stext)}">
+      <div class="fic ${k.cls}">${k.ic}</div>
+      <div class="finfo">
+        <div class="t">${esc(it.title||it.fileName||'ไฟล์')}</div>
+        ${it.desc?`<div class="d">${esc(it.desc)}</div>`:''}
+        ${meta?`<div class="meta">${esc(meta)}</div>`:''}
+      </div>
+      <div class="facts">
+        ${view?`<a class="btn-view" href="${view}" target="_blank" rel="noopener">เปิดดู</a>`:''}
+        ${dl?`<a class="btn-dl" href="${dl}" target="_blank" rel="noopener">ดาวน์โหลด</a>`:''}
+        ${editing?`<button class="mini" data-edit="${it.id}">แก้ไข</button>
+          <button class="mini del" data-del="${it.id}">ลบ</button>`:''}
+      </div>
+    </div>`;
+  });
+  html+=`</div>`;
+  if(editing) html+=`<div style="margin-top:18px"><button class="add-pill" id="addFile">+ เพิ่มเอกสาร/ไฟล์</button></div>`;
+  m.innerHTML=html;
+  const fs=$('#fileSearch');
+  if(fs){
+    const rows=[...m.querySelectorAll('.filerow')];
+    const noRes=document.createElement('div'); noRes.className='empty'; noRes.style.display='none';
+    noRes.textContent='ไม่พบเอกสารที่ค้นหา';
+    const list=m.querySelector('.filelist'); list.parentNode.insertBefore(noRes,list.nextSibling);
+    fs.oninput=()=>{ const q=fs.value.trim().toLowerCase(); let n=0;
+      rows.forEach(r=>{ const hit=!q||r.dataset.s.includes(q); r.style.display=hit?'':'none'; if(hit)n++; });
+      noRes.style.display=n?'none':'block';
+    };
+  }
+  if(editing){
+    $('#addFile').onclick=()=>fileForm(col,null);
+    m.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>fileForm(col,items.find(x=>x.id===b.dataset.edit)));
+    m.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>confirmDel(col,b.dataset.del));
+  }
+}
+
+/* ----- ข่าว ----- */
+async function renderNews(m){
+  const col='news';
+  let items=await Store.listCol(col);
+  const feeds  = items.filter(i=>i.type==='feed');
+  const manual = items.filter(i=>i.type!=='feed').sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  feeds.sort((a,b)=>(a.order||0)-(b.order||0));
+
+  let html=`<div class="section-head"><h2>${esc(activeTab.title)}</h2></div>`;
+  if(items.length===0 && !editing) html+=`<div class="empty">ยังไม่มีข่าวสาร</div>`;
+
+  // ---- ข่าวสดจาก RSS/เว็บอื่น (อยู่ด้านบน) ----
+  feeds.forEach(it=>{
+    html+=`<div class="feed-block" data-feed="${it.id}">
+      <div class="feed-head">
+        <span class="fh-ic">📡</span>
+        <span class="fh-t">${esc(it.title||'ข่าวสด')}</span>
+        <span class="fh-live">LIVE</span>
+        ${editing?`<button class="mini" data-edit="${it.id}">แก้ไข</button>
+          <button class="mini del" data-del="${it.id}">ลบ</button>`:''}
+      </div>
+      <div class="feed-body" id="feedbody_${it.id}">
+        <div class="feed-skel"><span class="sp"></span>กำลังดึงข่าวล่าสุดจากต้นทาง…</div>
+      </div>
+    </div>`;
+  });
+
+  // ---- ข่าวที่พิมพ์เอง ----
+  if(manual.length){
+    html+=`<div class="newslist">`;
+    manual.forEach(it=>{
+      html+=`<div class="news">
+        ${it.image?`<div class="nimg">${imgTag(it.image)}</div>`:''}
+        <div class="nbody">
+          <span class="date">${esc(formatDate(it.date))}</span>
+          <h3>${esc(it.title||'')}</h3>
+          <p class="news-body">${esc(it.body||'')}</p>
+          <button class="news-more">อ่านเพิ่มเติม ▼</button>
+          ${editing?`<div style="margin-top:10px"><button class="mini" data-edit="${it.id}">แก้ไข</button>
+            <button class="mini del" data-del="${it.id}">ลบ</button></div>`:''}
+        </div></div>`;
+    });
+    html+=`</div>`;
+  }
+
+  if(editing) html+=`<div style="margin-top:18px"><button class="add-pill" id="addNews">+ เพิ่มข่าว/ประกาศ</button></div>`;
+  m.innerHTML=html;
+
+  // จำกัดความสูงเนื้อหา + ปุ่มอ่านเพิ่มเติม (แสดงเฉพาะอันที่เนื้อหายาวจริง)
+  m.querySelectorAll('.news-body').forEach(p=>{
+    const btn=p.parentElement.querySelector('.news-more'); if(!btn) return;
+    if(p.scrollHeight - p.clientHeight < 6){ btn.style.display='none'; }
+    else btn.onclick=()=>{ const open=p.classList.toggle('open'); btn.textContent=open?'ย่อ ▲':'อ่านเพิ่มเติม ▼'; };
+  });
+
+  // โหลดข่าวสดของแต่ละ feed (แบบไม่บล็อกหน้า)
+  feeds.forEach(it=>loadFeed(it));
+
+  if(editing){
+    $('#addNews').onclick=()=>newsForm(col,null);
+    m.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>newsForm(col,items.find(x=>x.id===b.dataset.edit)));
+    m.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>confirmDel(col,b.dataset.del));
+  }
+}
+
+/* ---------- ดึงข่าวจาก RSS/เว็บอื่น (ฟรี ผ่าน rss2json + สำรอง allorigins) ---------- */
+async function loadFeed(it){
+  const box=document.getElementById('feedbody_'+it.id); if(!box) return;
+  const max=Math.max(1,Math.min(20, it.max||6));
+  const showImg = it.showImg!==false;
+  const showErr=(msg)=>{
+    box.innerHTML=`<div class="feed-err">${msg}</div><button class="news-more" style="margin-top:10px">↻ ลองใหม่</button>`;
+    const b=box.querySelector('.news-more'); if(b) b.onclick=()=>{ box.innerHTML=`<div class="feed-skel"><span class="sp"></span>กำลังดึงข่าวล่าสุดจากต้นทาง…</div>`; loadFeed(it); };
+  };
+  const render=(articles,note)=>{
+    let h=`<div class="feed-grid">`;
+    articles.slice(0,max).forEach(a=>{
+      const img=showImg&&a.image?`<div class="fc-img"><img src="${attr(a.image)}" referrerpolicy="no-referrer" loading="lazy" onerror="this.parentElement.style.display='none'" alt=""></div>`:'';
+      h+=`<a class="fcard" href="${attr(normUrl(a.link||'#'))}" target="_blank" rel="noopener">
+        ${img}
+        <div class="fc-b">
+          <div class="fc-src"><span>${esc(a.source||it.title||'')}</span><span>${esc(a.date||'')}</span></div>
+          <div class="fc-t">${esc(a.title||'')}</div>
+          ${a.desc?`<div class="fc-d">${esc(a.desc)}</div>`:''}
+          <div class="fc-go">อ่านต่อที่ต้นทาง ↗</div>
+        </div></a>`;
+    });
+    h+=`</div>`;
+    if(note) h+=note;
+    box.innerHTML=h;
+  };
+
+  // 1) แสดงแคชล่าสุดทันที (ถ้ามี) เพื่อให้เห็นข่าวไว ไม่ต้องรอ
+  let cached=null;
+  try{ const c=await Store.getDoc('feedcache/'+it.id); if(c&&Array.isArray(c.articles)&&c.articles.length){ cached=c; render(c.articles); } }catch(e){}
+
+  // 2) ดึงสดเบื้องหลัง แล้วอัปเดต + บันทึกแคช
+  try{
+    const articles=await fetchFeed(it.feedUrl, max);
+    if(articles && articles.length){
+      render(articles, `<div class="feed-note">อัปเดตล่าสุด: ${esc(nowStr())}</div>`);
+      // บันทึกแคช (ตัด desc ให้สั้นเพื่อประหยัดพื้นที่)
+      try{
+        const slim=articles.slice(0,max).map(a=>({title:a.title||'',link:a.link||'',date:a.date||'',
+          desc:(a.desc||'').slice(0,220), image:a.image||'', source:a.source||''}));
+        await Store.setDoc('feedcache/'+it.id,{articles:slim, at:Date.now()});
+      }catch(e){}
+      return;
+    }
+    // ดึงสดไม่ได้ — ถ้ามีแคชอยู่แล้ว คงไว้ พร้อมหมายเหตุ
+    if(cached){
+      render(cached.articles, `<div class="feed-note cached">⚠️ ดึงข่าวสดไม่ได้ชั่วคราว — แสดงข่าวล่าสุดที่บันทึกไว้ (${esc(fmtCacheTime(cached.at))})</div>`);
+    }else{
+      showErr('ดึงข่าวไม่สำเร็จในขณะนี้ — ถ้าเป็นลิงก์ Google News มักเกิดจากต้นทางบล็อกพร็อกซีฟรีชั่วคราว (429) ลองใหม่ภายหลังได้ • วิธีแก้ถาวร: ตั้งค่า Apps Script URL (หมวด 🔐) เพื่อดึงผ่านเซิร์ฟเวอร์ของคุณเอง');
+    }
+  }catch(e){
+    console.error('feed error',e);
+    if(cached) render(cached.articles, `<div class="feed-note cached">⚠️ ดึงข่าวสดไม่ได้ชั่วคราว — แสดงข่าวล่าสุดที่บันทึกไว้ (${esc(fmtCacheTime(cached.at))})</div>`);
+    else showErr('ดึงข่าวไม่สำเร็จ — ลองลิงก์ RSS อื่น หรือใช้ Google News RSS / ตั้งค่า Apps Script เพื่อความเสถียร');
+  }
+}
+function nowStr(){ try{ return new Date().toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+function fmtCacheTime(ms){ if(!ms) return ''; try{ return new Date(ms).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+// ดึงข้อมูลพร้อม timeout (กันค้างไม่จบ)
+async function fetchWithTimeout(url, ms, asJson){
+  const ctrl = ('AbortController' in window) ? new AbortController() : null;
+  const t = setTimeout(()=>{ try{ctrl&&ctrl.abort();}catch(_){} }, ms||10000);
+  try{
+    const r = await fetch(url, ctrl?{signal:ctrl.signal}:undefined);
+    return asJson ? await r.json() : await r.text();
+  } finally { clearTimeout(t); }
+}
+// ดึงและแปลง RSS -> รายการบทความ {title,link,date,desc,image,source}
+// ลองหลายช่องทางเรียงกัน แต่ละช่องมี timeout จึงไม่ค้างตลอด
+async function fetchFeed(url, max){
+  if(!url) return [];
+  url=normUrl(url.trim());
+  const count=max||6;
+  // ช่องทาง 0 (เสถียรสุด): ผ่าน Apps Script ของผู้ใช้เอง — ดึงฝั่งเซิร์ฟเวอร์ Google ไม่ติด CORS/บล็อก/ลิมิตพร็อกซี
+  if(SITE.gasUploadUrl){
+    try{
+      const sep=SITE.gasUploadUrl.includes('?')?'&':'?';
+      const xml=await fetchWithTimeout(SITE.gasUploadUrl+sep+'feed='+encodeURIComponent(url)+'&t='+Date.now(), 12000, false);
+      if(looksLikeFeed(xml)){ const arr=parseRss(xml, count); if(arr && arr.length) return arr; }
+    }catch(e){ /* ลองช่องทางสาธารณะต่อ */ }
+  }
+  // ช่องทาง 1: rss2json (แปลงเป็น JSON ให้เลย รองรับ CORS) — สะดวก แต่มัก throttle เฉพาะ Google News
+  try{
+    const j=await fetchWithTimeout('https://api.rss2json.com/v1/api.json?count='+count+'&rss_url='+encodeURIComponent(url), 10000, true);
+    if(j && j.status==='ok' && Array.isArray(j.items) && j.items.length){
+      const src=(j.feed&&j.feed.title)||'';
+      return j.items.map(x=>({
+        title:x.title||'', link:x.link||'', date:fmtFeedDate(x.pubDate),
+        desc:stripTags(x.description||x.content||''),
+        image:x.thumbnail||(x.enclosure&&x.enclosure.link)||firstImg(x.content||x.description||''),
+        source:src
+      }));
+    }
+  }catch(e){ /* ลองช่องทางสำรอง */ }
+  // ช่องทาง 2+: พร็อกซี CORS ฟรีหลายตัว ดึง XML ดิบมา parse เอง
+  //   เหตุที่ต้องมีหลายตัว: Google News มักบล็อก IP ของพร็อกซีที่ถูกเรียกบ่อย (ตอบ 429/หน้า consent)
+  //   ทำให้เกิดอาการ "เช้าใช้ได้ บ่ายใช้ไม่ได้" — ไล่หลายพร็อกซีเพื่อเพิ่มโอกาสเจอ IP ที่ยังไม่ถูกบล็อก
+  const proxies=[
+    u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u)+'&t='+Date.now(),
+    u=>'https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(u),
+    u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
+    u=>'https://thingproxy.freeboard.io/fetch/'+u
+  ];
+  for(const make of proxies){
+    try{
+      const xml=await fetchWithTimeout(make(url), 9000, false);
+      if(!looksLikeFeed(xml)) continue;          // ข้ามหน้า error/consent/HTML ที่ไม่ใช่ฟีด
+      const arr=parseRss(xml, count);
+      if(arr && arr.length) return arr;
+    }catch(e){ /* ลองตัวถัดไป */ }
+  }
+  // ช่องทางสุดท้าย: allorigins แบบ JSON (.contents) — บางครั้งผ่านได้ทั้งที่ /raw ล้ม
+  try{
+    const j=await fetchWithTimeout('https://api.allorigins.win/get?url='+encodeURIComponent(url)+'&t='+Date.now(), 10000, true);
+    const xml=(j && typeof j.contents==='string') ? j.contents : '';
+    if(looksLikeFeed(xml)){ const arr=parseRss(xml, count); if(arr && arr.length) return arr; }
+  }catch(e){}
+  return [];
+}
+// ตรวจคร่าว ๆ ว่าข้อความที่ได้คือฟีด RSS/Atom จริง (ไม่ใช่หน้า error/consent/HTML เปล่า)
+function looksLikeFeed(s){
+  if(!s || typeof s!=='string') return false;
+  return /<item[\s>]/i.test(s) || /<entry[\s>]/i.test(s);
+}
+// แปลง XML ของ RSS/Atom เป็นรายการบทความ
+function parseRss(xml, max){
+  const doc=new DOMParser().parseFromString(xml,'text/xml');
+  const src=(doc.querySelector('channel>title,feed>title')||{}).textContent||'';
+  let nodes=[...doc.querySelectorAll('item')];
+  if(!nodes.length) nodes=[...doc.querySelectorAll('entry')]; // Atom
+  return nodes.slice(0,max||6).map(n=>{
+    const g=s=>{const e=n.querySelector(s);return e?e.textContent:'';};
+    let link=g('link'); const la=n.querySelector('link'); if(!link && la) link=la.getAttribute('href')||'';
+    const content=g('encoded')||g('content')||g('description')||g('summary')||'';
+    let image=''; const enc=n.querySelector('enclosure'); if(enc) image=enc.getAttribute('url')||'';
+    const media=n.querySelector('content,thumbnail'); if(!image && media) image=media.getAttribute('url')||'';
+    if(!image) image=firstImg(content);
+    return {title:g('title'),link,date:fmtFeedDate(g('pubDate')||g('published')||g('updated')),
+            desc:stripTags(content),image,source:(src||'').trim()};
+  });
+}
+function stripTags(s){ const d=document.createElement('div'); d.innerHTML=s||''; const t=(d.textContent||'').replace(/\s+/g,' ').trim(); return t; }
+function firstImg(html){ const m=(html||'').match(/<img[^>]+src=["']([^"']+)["']/i); return m?m[1]:''; }
+function fmtFeedDate(d){ if(!d) return ''; const t=new Date(d); if(isNaN(t)) return '';
+  try{ return t.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}); }catch(e){ return ''; } }
+
+/* ============================================================
+   ระบบ "บล็อกเนื้อหา" — ใช้ทั้งหน้าหลัก + ภาพกิจกรรม + lightbox
+   ============================================================ */
+const TYPE_LABELS={text:'ข้อความ',textbox:'กล่องข้อความ (มีเอฟเฟค+ป้าย)',marquee:'อักษรวิ่ง (Marquee)',
+  image:'รูปเดียว',album:'อัลบั้มสไลด์โชว์',mediatext:'รูป/วิดีโอ + ข้อความ (จัดกลุ่ม)',
+  cardlink:'การ์ดฝังลิงก์',cards:'การ์ดหลายใบ',buttons:'ปุ่มลิงก์',embed:'ฝังสื่อ (YouTube/ฟอร์ม/แผนที่)'};
+const HOME_TYPES=['text','textbox','marquee','image','album','mediatext','cards','buttons','embed'];
+const GALLERY_TYPES=['image','album','cardlink'];
+const TB_EFFECTS=[['info','ข้อมูล (ฟ้า)'],['success','สำเร็จ (เขียว)'],['warning','คำเตือน (เหลือง)'],
+  ['danger','สำคัญ (แดง)'],['highlight','ไฮไลต์ (ไล่สี)'],['outline','เส้นขอบประ'],['glow','เรืองแสง'],['soft','เงานุ่ม']];
+
+let EDIT_PHOTOS=[], EDIT_PHOTO_LINKS=[], EDIT_CARDS=[], EDIT_BUTTONS=[], LB_SETS={}, LB_CUR=null;
+
+/* ---------- หน้าหลัก + แท็บเนื้อหาอิสระ: ระบบหลายบล็อก ---------- */
+async function renderHome(m){
+  return renderBlocks(m,'homeblocks',{hero:true, legacyPath:'content/home', filterTab:false});
+}
+// ระบบบล็อกเนื้อหาแบบเต็ม (เปิดทุกชนิดเหมือนหน้าหลัก) ใช้ได้ทั้งหน้าหลักและแท็บที่สร้างใหม่
+//   col='homeblocks' (หน้าหลัก, ไม่กรอง) | col='tabblocks' (แท็บเนื้อหาอิสระ, กรองด้วย tabId)
+async function renderBlocks(m, col, opts){
+  opts=opts||{};
+  let blocks=await Store.listCol(col);
+  if(opts.filterTab) blocks=blocks.filter(b=>b.tabId===activeTab.id);
+  blocks.sort((a,b)=>(a.order||0)-(b.order||0));
+  const legacy = opts.legacyPath ? await Store.getDoc(opts.legacyPath) : null;
+  LB_SETS={};
+  let html='';
+  if(opts.hero) html+=`<div class="hero"><h2>${esc(SITE.name)}</h2><p>${esc(SITE.tagline)}</p></div>`;
+  html+=`<div class="section-head"><h2>${esc(activeTab.title)}</h2></div>`;
+  if(blocks.length===0 && (!legacy||!legacy.html) && !editing) html+=`<div class="empty">ยังไม่มีเนื้อหา</div>`;
+  html+=`<div class="blocks">`;
+  // เนื้อหาข้อความเดิม (ถ้ายังไม่มีบล็อกใหม่) — แสดงไว้ไม่ให้ข้อมูลหาย
+  if(opts.legacyPath && legacy && legacy.html && blocks.length===0){
+    html+=`<div class="block-wrap"><div class="block-text">${esc(legacy.html)}</div>
+      ${editing?`<div class="bw-tools"><button class="mini" id="editLegacy">แก้ไขข้อความเดิม</button></div>`:''}</div>`;
+  }
+  blocks.forEach((b,idx)=>{ html+=`<div class="block-wrap size-${b.size||'full'}" data-id="${b.id}">${homeBlockHtml(b)}${editing?blockToolsHtml(b,idx,blocks.length):''}</div>`; });
+  html+=`</div>`;
+  if(editing) html+=`<div style="margin-top:18px"><button class="add-pill" id="addBlock">+ เพิ่มบล็อกเนื้อหา</button></div>`;
+  m.innerHTML=html;
+  bindLb(m); initCarousels(m); bindEmbeds(m); initMarquees(m);
+  if(editing){
+    const el=$('#editLegacy'); if(el && opts.legacyPath) el.onclick=()=>editContentBlock(opts.legacyPath,(legacy&&legacy.html)||'');
+    $('#addBlock').onclick=()=>blockForm(col,null,HOME_TYPES);
+    m.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>blockForm(col,blocks.find(x=>x.id===b.dataset.edit),HOME_TYPES));
+    m.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>confirmDel(col,b.dataset.del));
+    const ids=blocks.map(x=>x.id);
+    m.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>moveBlock(col,ids.slice(),b.dataset.up,-1));
+    m.querySelectorAll('[data-down]').forEach(b=>b.onclick=()=>moveBlock(col,ids.slice(),b.dataset.down,1));
+    const blocksBox=m.querySelector('.blocks');
+    if(blocksBox && blocks.length>1) enableDragSort(blocksBox,'.block-wrap[data-id]','y',ids2=>reorderBlocks(col,ids2));
+  }
+}
+function blockToolsHtml(b,idx,total){
+  const up = idx>0       ? `<button class="mini" data-up="${b.id}" title="เลื่อนขึ้น">▲</button>`   : `<button class="mini" disabled>▲</button>`;
+  const dn = idx<total-1 ? `<button class="mini" data-down="${b.id}" title="เลื่อนลง">▼</button>` : `<button class="mini" disabled>▼</button>`;
+  return `<div class="bw-tools">${up}${dn}
+    <button class="mini" data-edit="${b.id}">แก้ไข</button>
+    <button class="mini del" data-del="${b.id}">ลบ</button></div>`;
+}
+function homeBlockHtml(b){
+  const H=b.heading?`<div class="block-heading">${esc(b.heading)}</div>`:'';
+  if(b.type==='text') return `${H}<div class="block-text">${esc(b.body||'')}</div>`;
+  if(b.type==='textbox'){
+    const eff=b.effect||'info';
+    return `<div class="textbox tb-${eff}">${b.label?`<span class="tb-label">${esc(b.label)}</span>`:''}<div class="tb-body">${esc(b.body||'')}</div></div>`;
+  }
+  if(b.type==='marquee'){
+    const dir=(b.dir==='right')?'reverse':'normal';
+    const txt=b.text||'';
+    const speed=b.speed||'normal';
+    // initMarquees จะทำซ้ำข้อความให้เต็มแถบ + คำนวณความเร็วตามความกว้างจริง
+    return `${H}<div class="marquee"><span class="mq-track" data-speed="${speed}" data-text="${attr(txt)}" style="animation-direction:${dir}">${esc(txt)}</span></div>`;
+  }
+  if(b.type==='image'){
+    LB_SETS[b.id]=[{url:b.photo||'',cap:b.caption||''}];
+    const link=b.link?normUrl(b.link):'';
+    const imgInner=`<div data-lb="${b.id}" data-i="0">${b.photo?imgTag(b.photo):''}</div>`;
+    const body=link?`<a href="${link}" target="_blank" rel="noopener">${b.photo?imgTag(b.photo):''}</a>`:imgInner;
+    return `${H}<div class="single-img">${body}${b.caption?`<div class="img-cap">${esc(b.caption)}</div>`:''}</div>`;
+  }
+  if(b.type==='album'){
+    const photos=(b.photos||[]).filter(Boolean);
+    LB_SETS[b.id]=photos.map(u=>({url:u,cap:b.heading||''}));
+    return `${H}${carouselHtml(b.id,photos,b.links||[])}`;
+  }
+  if(b.type==='cards'){
+    let g=`<div class="grid">`;
+    (b.cards||[]).forEach(c=>{
+      const link=c.link?normUrl(c.link):'';
+      const inner=`<div class="photo">${c.photo?imgTag(c.photo):''}</div>
+        <div class="body"><div class="t">${esc(c.title||'')}</div>${c.desc?`<div class="d">${esc(c.desc)}</div>`:''}</div>`;
+      g+= link?`<a class="card clickable" href="${link}" target="_blank" rel="noopener">${inner}</a>`:`<div class="card">${inner}</div>`;
+    });
+    g+=`</div>`;
+    return `${H}${g}`;
+  }
+  if(b.type==='buttons'){
+    let r=`<div class="btnrow">`;
+    (b.buttons||[]).forEach(bt=>{ const link=bt.link?normUrl(bt.link):'#'; r+=`<a class="bigbtn" href="${link}" target="_blank" rel="noopener">${esc(bt.label||'ลิงก์')}</a>`; });
+    r+=`</div>`;
+    return `${H}${r}`;
+  }
+  if(b.type==='embed') return `${H}<div class="block-embed">${embedHtml(b.embed)}</div>`;
+  if(b.type==='mediatext'){
+    const layout=b.layout||'right';
+    let media='';
+    if(b.mediaType==='image' && b.photo){
+      media=`<div class="mt-media">${imgTag(b.photo)}</div>`;
+    }else if(b.mediaType==='album'){
+      const photos=(b.photos||[]).filter(Boolean);
+      LB_SETS[b.id]=photos.map(u=>({url:u,cap:b.gtitle||''}));
+      media=`<div class="mt-media">${carouselHtml(b.id,photos,b.links||[])}</div>`;
+    }else if(b.mediaType==='embed' && b.embed){
+      media=`<div class="mt-media block-embed">${embedHtml(b.embed)}</div>`;
+    }
+    const text=`<div class="mt-text">
+      ${b.gtitle?`<div class="mt-title">${esc(b.gtitle)}</div>`:''}
+      ${b.gbody?`<div class="mt-body">${esc(b.gbody)}</div>`:''}</div>`;
+    return `${H}<div class="mediatext mt-${layout}">${media}${text}</div>`;
+  }
+  return H;
+}
+
+/* ---------- ภาพกิจกรรม (gallery) ---------- */
+async function renderGallery(m){
+  const col=TAB_KINDS[activeTab.type].store.col;
+  let items=await Store.listCol(col);
+  if(TAB_KINDS[activeTab.type].store.filterTab) items=items.filter(i=>i.tabId===activeTab.id);
+  items.sort((a,b)=>(a.order||0)-(b.order||0));
+  LB_SETS={};
+  let html=`<div class="section-head"><h2>${esc(activeTab.title)}</h2></div>`;
+  if(items.length===0 && !editing) html+=`<div class="empty">ยังไม่มีภาพกิจกรรม</div>`;
+  html+=`<div class="gallery-grid">`;
+  items.forEach(it=>{ html+=galleryTileHtml(it,editing); });
+  html+=`</div>`;
+  if(editing) html+=`<div style="margin-top:18px"><button class="add-pill" id="addGal">+ เพิ่มภาพกิจกรรม</button></div>`;
+  m.innerHTML=html;
+  bindLb(m);
+  if(editing){
+    $('#addGal').onclick=()=>blockForm(col,null,GALLERY_TYPES);
+    m.querySelectorAll('[data-edit]').forEach(b=>b.onclick=(e)=>{e.stopPropagation();blockForm(col,items.find(x=>x.id===b.dataset.edit),GALLERY_TYPES);});
+    m.querySelectorAll('[data-del]').forEach(b=>b.onclick=(e)=>{e.stopPropagation();confirmDel(col,b.dataset.del);});
+  }
+}
+function galleryTileHtml(it,ed){
+  const tools= ed?`<div class="tools"><button class="mini" data-edit="${it.id}">แก้</button>
+    <button class="mini del" data-del="${it.id}">ลบ</button></div>`:'';
+  if(it.type==='cardlink'){
+    const link=(!ed&&it.link)?normUrl(it.link):'';
+    const inner=`${it.photo?imgTag(it.photo):''}${it.title?`<div class="cap">${esc(it.title)}</div>`:''}${tools}`;
+    return link?`<a class="gtile" href="${link}" target="_blank" rel="noopener">${inner}</a>`:`<div class="gtile">${inner}</div>`;
+  }
+  if(it.type==='album'){
+    const photos=(it.photos||[]).filter(Boolean);
+    LB_SETS[it.id]=photos.map(u=>({url:u,cap:it.title||''}));
+    return `<div class="gtile" ${ed?'':`data-lb="${it.id}" data-i="0"`}>
+      ${photos[0]?imgTag(photos[0]):''}
+      <div class="count">🖼 ${photos.length}</div>
+      ${it.title?`<div class="cap">${esc(it.title)}</div>`:''}${tools}</div>`;
+  }
+  // image (รูปเดียว)
+  LB_SETS[it.id]=[{url:it.photo||'',cap:it.caption||''}];
+  return `<div class="gtile" ${ed?'':`data-lb="${it.id}" data-i="0"`}>
+    ${it.photo?imgTag(it.photo):''}
+    ${it.caption?`<div class="cap">${esc(it.caption)}</div>`:''}${tools}</div>`;
+}
+
+/* ---------- Image Carousel ---------- */
+function carouselHtml(id,photos,links){
+  if(!photos.length) return '';
+  links=links||[];
+  const slide=(u,i)=>{
+    const href=(links[i]||'').trim();
+    if(href) return `<a class="car-slide lnk" href="${attr(normUrl(href))}" target="_blank" rel="noopener">${imgTag(u)}</a>`;
+    return `<div class="car-slide" data-lb="${id}" data-i="${i}">${imgTag(u)}</div>`;
+  };
+  const slides=photos.map(slide).join('');
+  if(photos.length===1) return `<div class="carousel" data-cid="${id}"><div class="car-track">${slides}</div></div>`;
+  const dots=photos.map((_,i)=>`<b data-i="${i}" class="${i===0?'on':''}"></b>`).join('');
+  return `<div class="carousel" data-cid="${id}">
+    <div class="car-track">${slides}</div>
+    <button class="car-nav prev" data-d="-1">‹</button>
+    <button class="car-nav next" data-d="1">›</button>
+    <div class="car-counter"><span class="cc-now">1</span>/${photos.length}</div>
+    <div class="car-dots">${dots}</div>
+  </div>`;
+}
+function initCarousels(scope){
+  scope.querySelectorAll('.carousel').forEach(car=>{
+    const track=car.querySelector('.car-track');
+    const slides=car.querySelectorAll('.car-slide');
+    const n=slides.length; if(n<=1) return;
+    let i=0, timer=null;
+    const dots=car.querySelectorAll('.car-dots b');
+    const ccnow=car.querySelector('.cc-now');
+    const go=(k)=>{ i=(k+n)%n; track.style.transform=`translateX(${-i*100}%)`;
+      dots.forEach((d,j)=>d.classList.toggle('on',j===i)); if(ccnow) ccnow.textContent=i+1; };
+    const start=()=>{ stop(); timer=setInterval(()=>go(i+1),4500); };
+    const stop =()=>{ if(timer){ clearInterval(timer); timer=null; } };
+    car.querySelectorAll('.car-nav').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); go(i+parseInt(b.dataset.d,10)); start(); });
+    dots.forEach(d=>d.onclick=(e)=>{ e.stopPropagation(); go(parseInt(d.dataset.i,10)); start(); });
+    car.onmouseenter=stop; car.onmouseleave=start;
+    let sx=null;
+    car.addEventListener('touchstart',e=>{ sx=e.touches[0].clientX; stop(); },{passive:true});
+    car.addEventListener('touchend',e=>{ if(sx==null) return; const dx=e.changedTouches[0].clientX-sx;
+      if(Math.abs(dx)>40) go(i+(dx<0?1:-1)); sx=null; start(); },{passive:true});
+    start();
+  });
+}
+
+/* ---------- Marquee อักษรวิ่ง: ทำซ้ำข้อความให้เต็มแถบ + ความเร็วคงที่ (px/วินาที) ---------- */
+function initMarquees(scope){
+  const PXPS={slow:55, normal:120, fast:240};   // พิกเซลต่อวินาที (ต่างกันชัดเจน)
+  const GAP='\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
+  (scope||document).querySelectorAll('.marquee').forEach(mq=>{
+    const tr=mq.querySelector('.mq-track'); if(!tr) return;
+    const text=(tr.dataset.text||tr.textContent||'').trim();
+    const speed=tr.dataset.speed||'normal';
+    const build=()=>{
+      if(!text){ tr.textContent=''; return; }
+      const unit=text+GAP;
+      // วัดความกว้างข้อความ 1 ชุด (หน่วยลับ)
+      const meas=document.createElement('span');
+      meas.style.cssText='visibility:hidden;position:absolute;left:-9999px;white-space:nowrap;'
+        +'font-family:var(--font-head);font-size:16px';
+      meas.textContent=unit; document.body.appendChild(meas);
+      const unitW=meas.scrollWidth||120; meas.remove();
+      const contW=mq.clientWidth||unitW;
+      // ทำซ้ำให้ "หนึ่งชุด" ยาวเกินความกว้างแถบ แล้วต่ออีกชุดเพื่อวนไร้รอยต่อ
+      const copies=Math.max(2, Math.ceil(contW/unitW)+1);
+      const oneSet=unit.repeat(copies);
+      tr.textContent=oneSet+oneSet;       // 2 ชุด -> translateX(-50%) = เลื่อนทีละ 1 ชุด
+      const setW=unitW*copies;
+      const sp=PXPS[speed]||120;
+      tr.style.animationDuration=Math.max(3,(setW/sp)).toFixed(2)+'s';
+    };
+    build();
+    // วัดซ้ำหลังฟอนต์ไทยโหลดเสร็จ (ความกว้างจะแม่นขึ้น)
+    if(document.fonts&&document.fonts.ready) document.fonts.ready.then(build);
+  });
+}
+
+/* ---------- lightbox ---------- */
+function bindLb(scope){
+  scope.querySelectorAll('[data-lb]').forEach(el=>{
+    el.style.cursor='zoom-in';
+    el.onclick=()=>openLightbox(el.dataset.lb, parseInt(el.dataset.i||'0',10));
+  });
+}
+function openLightbox(key,i){
+  const set=LB_SETS[key]; if(!set||!set.length) return;
+  LB_CUR={set, i:Math.max(0,Math.min(i||0,set.length-1))};
+  showLb(); $('#lightbox').classList.add('show');
+}
+function showLb(){
+  if(!LB_CUR) return; const {set,i}=LB_CUR; const p=set[i]||{};
+  $('#lbImg').src=normImg(p.url||''); $('#lbCap').textContent=p.cap||'';
+  $('#lbCount').textContent=set.length>1?`${i+1} / ${set.length}`:'';
+  $('#lbPrev').style.display=$('#lbNext').style.display=set.length>1?'grid':'none';
+}
+function lbStep(d){ if(!LB_CUR) return; const n=LB_CUR.set.length; LB_CUR.i=(LB_CUR.i+d+n)%n; showLb(); }
+function closeLightbox(){ $('#lightbox').classList.remove('show'); LB_CUR=null; }
+$('#lbClose').onclick=closeLightbox;
+$('#lbPrev').onclick=()=>lbStep(-1);
+$('#lbNext').onclick=()=>lbStep(1);
+$('#lightbox').onclick=(e)=>{ if(e.target.id==='lightbox') closeLightbox(); };
+document.addEventListener('keydown',e=>{
+  if(!$('#lightbox').classList.contains('show')) return;
+  if(e.key==='Escape') closeLightbox();
+  else if(e.key==='ArrowLeft') lbStep(-1);
+  else if(e.key==='ArrowRight') lbStep(1);
+});
+
+/* ---------- ฟอร์มบล็อก (ใช้ร่วมหน้าหลัก + ภาพกิจกรรม) ---------- */
+function blockForm(col,item,types){
+  const it=item||{};
+  const curType=(it.type&&types.includes(it.type))?it.type:types[0];
+  EDIT_PHOTOS=(it.photos||[]).slice();
+  EDIT_PHOTO_LINKS=EDIT_PHOTOS.map((_,i)=>((it.links||[])[i]||''));   // ลิงก์ต่อรูป (คู่ขนานกับ EDIT_PHOTOS)
+  EDIT_CARDS=(it.cards||[]).map(c=>({...c}));
+  EDIT_BUTTONS=(it.buttons||[]).map(c=>({...c}));
+  const typeSel=`<select id="blk_type">${types.map(t=>`<option value="${t}" ${t===curType?'selected':''}>${TYPE_LABELS[t]}</option>`).join('')}</select>`;
+  const isHome=(col==='homeblocks');
+  const sizeOpts=[['full','เต็มความกว้าง'],['lg','ใหญ่'],['md','กลาง'],['sm','เล็ก']];
+  const curSize=it.size||'full';
+  const sizeSel=isHome?field('ขนาดแสดงผลของบล็อก',`<select id="blk_size">${sizeOpts.map(o=>`<option value="${o[0]}" ${o[0]===curSize?'selected':''}>${o[1]}</option>`).join('')}</select>`,'กำหนดความกว้างของบล็อกบนหน้า'):'';
+  openModal(item?'แก้ไขบล็อก':'เพิ่มบล็อก',
+    field('ชนิดบล็อก',typeSel)+sizeSel+`<div id="blkFields"></div>`,
+    `<button class="btn ghost" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn primary" id="saveBlk">บันทึก</button>`);
+  const draw=()=>renderBlockFields($('#blk_type').value,it);
+  $('#blk_type').onchange=draw; draw();
+  $('#saveBlk').onclick=async()=>{
+    const t=$('#blk_type').value;
+    const data={type:t, order:it.order||Date.now()};
+    const sz=$('#blk_size'); if(sz) data.size=sz.value;
+    if(col!=='homeblocks') data.tabId=activeTab.id;   // ภาพกิจกรรมต้องผูกกับแท็บ
+    const hv=$('#blk_heading'); if(hv) data.heading=hv.value.trim();
+    if(t==='text'){ data.body=$('#blk_body').value; }
+    else if(t==='textbox'){ data.label=$('#blk_label').value.trim(); data.effect=$('#blk_effect').value; data.body=$('#blk_body').value; }
+    else if(t==='marquee'){ data.text=$('#blk_text').value.trim(); data.speed=$('#blk_speed').value; data.dir=$('#blk_dir').value; }
+    else if(t==='image'){ data.photo=$('#blk_photo').value.trim(); data.caption=$('#blk_caption').value.trim(); if($('#blk_link')) data.link=$('#blk_link').value.trim(); }
+    else if(t==='album'){
+      const pairs=EDIT_PHOTOS.map((u,i)=>[u,(EDIT_PHOTO_LINKS[i]||'').trim()]).filter(p=>p[0]);
+      data.photos=pairs.map(p=>p[0]);
+      data.links =pairs.map(p=>p[1]);   // '' = ไม่มีลิงก์ (กดแล้วซูมตามเดิม)
+    }
+    else if(t==='cardlink'){ data.photo=$('#blk_photo').value.trim(); data.title=$('#blk_title').value.trim(); data.desc=$('#blk_desc').value.trim(); data.link=$('#blk_link').value.trim(); }
+    else if(t==='cards'){ data.cards=EDIT_CARDS.filter(c=>c.title||c.photo||c.link); }
+    else if(t==='buttons'){ data.buttons=EDIT_BUTTONS.filter(b=>b.label||b.link); }
+    else if(t==='embed'){ data.embed=$('#blk_embed').value.trim(); }
+    else if(t==='mediatext'){
+      data.mediaType=$('#blk_mtype').value;
+      data.layout=$('#blk_layout').value;
+      data.gtitle=$('#blk_gtitle').value.trim();
+      data.gbody=$('#blk_gbody').value;
+      if(data.mediaType==='image'){ data.photo=$('#blk_photo')?$('#blk_photo').value.trim():''; }
+      else if(data.mediaType==='album'){
+        const pairs=EDIT_PHOTOS.map((u,i)=>[u,(EDIT_PHOTO_LINKS[i]||'').trim()]).filter(p=>p[0]);
+        data.photos=pairs.map(p=>p[0]); data.links=pairs.map(p=>p[1]);
+      }else if(data.mediaType==='embed'){ data.embed=$('#blk_embed')?$('#blk_embed').value.trim():''; }
+    }
+    await saveItem(col,item,data); closeModal(); renderMain(); toast('บันทึกแล้ว');
+  };
+}
+function renderBlockFields(type,it){
+  const box=$('#blkFields'); let h='';
+  const heading=(label)=>field(label||'หัวข้อ (ไม่บังคับ)',`<input type="text" id="blk_heading" value="${attr(it.heading)}">`);
+  if(type==='text'){
+    h=heading()+field('เนื้อหา',`<textarea id="blk_body" style="min-height:160px">${esc(it.body||'')}</textarea>`,'เว้นบรรทัดได้ตามปกติ');
+  }else if(type==='textbox'){
+    h=field('ป้ายกำกับ (Label, ไม่บังคับ)',`<input type="text" id="blk_label" value="${attr(it.label)}" placeholder="เช่น ประกาศ, สำคัญ, หมายเหตุ">`)
+     +field('สไตล์/เอฟเฟค',`<select id="blk_effect">${TB_EFFECTS.map(o=>`<option value="${o[0]}" ${o[0]===(it.effect||'info')?'selected':''}>${o[1]}</option>`).join('')}</select>`)
+     +field('ข้อความ',`<textarea id="blk_body" style="min-height:120px">${esc(it.body||'')}</textarea>`,'เว้นบรรทัดได้');
+  }else if(type==='marquee'){
+    h=field('ข้อความวิ่ง',`<input type="text" id="blk_text" value="${attr(it.text)}" placeholder="ข้อความที่จะเลื่อนวิ่ง">`)
+     +field('ความเร็ว',`<select id="blk_speed">${[['slow','ช้า'],['normal','ปกติ'],['fast','เร็ว']].map(o=>`<option value="${o[0]}" ${o[0]===(it.speed||'normal')?'selected':''}>${o[1]}</option>`).join('')}</select>`)
+     +field('ทิศทาง',`<select id="blk_dir"><option value="left" ${it.dir!=='right'?'selected':''}>วิ่งไปทางซ้าย</option><option value="right" ${it.dir==='right'?'selected':''}>วิ่งไปทางขวา</option></select>`);
+  }else if(type==='image'){
+    h=imgField('blk_photo',it.photo,'รูปภาพ')
+     +field('คำบรรยายใต้รูป (ไม่บังคับ)',`<input type="text" id="blk_caption" value="${attr(it.caption)}">`)
+     +field('ลิงก์เมื่อกดรูป (ไม่บังคับ)',`<input type="url" id="blk_link" value="${attr(it.link)}" placeholder="https://...">`,'ถ้าใส่ลิงก์ การกดรูปจะเปิดลิงก์แทนการซูม');
+  }else if(type==='album'){
+    h=heading('ชื่ออัลบั้ม (ไม่บังคับ)')
+     +`<div class="field"><label>รูปในอัลบั้ม</label><div class="editor-list" id="photoEditor"></div>
+        <div class="uprow"><input type="file" id="ph_file" accept="image/*" multiple></div>
+        <input type="url" id="ph_url" placeholder="หรือวางลิงก์รูป แล้วกดปุ่มเพิ่ม" style="margin-top:8px">
+        <button type="button" class="add-mini" id="ph_add">+ เพิ่มลิงก์รูป</button>
+        <div class="hint">อัปโหลดได้หลายรูปพร้อมกัน (เลือกหลายไฟล์) หรือวางลิงก์ทีละรูป • กด ↑ เพื่อสลับลำดับ • ใส่ “ลิงก์เมื่อกดรูป” ในแต่ละรูปได้ ถ้าใส่ไว้ การกดรูปนั้นจะเปิดลิงก์แทนการซูม</div></div>`;
+  }else if(type==='cardlink'){
+    h=imgField('blk_photo',it.photo,'รูปการ์ด')
+     +field('หัวข้อการ์ด',`<input type="text" id="blk_title" value="${attr(it.title)}">`)
+     +field('คำอธิบาย (ไม่บังคับ)',`<input type="text" id="blk_desc" value="${attr(it.desc)}">`)
+     +field('ลิงก์ปลายทาง',`<input type="url" id="blk_link" value="${attr(it.link)}" placeholder="https://...">`,'กดที่การ์ดเพื่อเปิดลิงก์นี้');
+  }else if(type==='cards'){
+    h=heading()+`<div class="field"><label>การ์ดในกลุ่ม</label><div class="editor-list" id="cardsEditor"></div>
+      <button type="button" class="add-mini" id="cards_add">+ เพิ่มการ์ด</button></div>`;
+  }else if(type==='buttons'){
+    h=heading()+`<div class="field"><label>ปุ่มลิงก์</label><div class="editor-list" id="buttonsEditor"></div>
+      <button type="button" class="add-mini" id="btn_add">+ เพิ่มปุ่ม</button></div>`;
+  }else if(type==='embed'){
+    h=heading()+field('ลิงก์/โค้ดฝัง',`<input type="url" id="blk_embed" value="${attr(it.embed)}" placeholder="วาง URL หรือโค้ด <iframe>">`,'รองรับ YouTube, Google Form (เติม embedded ให้เอง), Google Maps ฯลฯ');
+  }else if(type==='mediatext'){
+    const mt=it.mediaType||'image', lay=it.layout||'right';
+    const opt=(v,l,cur)=>`<option value="${v}" ${v===cur?'selected':''}>${l}</option>`;
+    h=field('ชนิดสื่อ',`<select id="blk_mtype">
+        ${opt('image','รูปเดียว',mt)}${opt('album','อัลบั้มสไลด์ (Carousel)',mt)}${opt('embed','วิดีโอ/โค้ดฝัง (YouTube/แผนที่/ฟอร์ม)',mt)}
+      </select>`)
+     +`<div id="mtMedia"></div>`
+     +field('ตำแหน่งข้อความเทียบกับสื่อ',`<select id="blk_layout">
+        ${opt('right','ข้อความด้านขวา',lay)}${opt('left','ข้อความด้านซ้าย',lay)}${opt('below','ข้อความด้านล่าง',lay)}${opt('above','ข้อความด้านบน',lay)}
+      </select>`)
+     +`<div class="field" style="border-top:1px dashed var(--line);padding-top:12px;margin-top:2px">
+        <label style="font-weight:700;color:var(--primary)">📦 ข้อความจัดกลุ่ม</label>
+        <div class="hint" style="margin:2px 0 0">หัวข้อหลัก + เนื้อความ จะถูกจับเป็น “กลุ่มเดียวกัน” แล้ววางข้าง/บน/ล่างสื่อ</div></div>`
+     +field('หัวข้อหลัก (Title)',`<input type="text" id="blk_gtitle" value="${attr(it.gtitle)}" placeholder="หัวข้อของกลุ่มข้อความ">`)
+     +field('เนื้อความ (Normal text)',`<textarea id="blk_gbody" style="min-height:130px">${esc(it.gbody||'')}</textarea>`,'เว้นบรรทัดได้ตามปกติ');
+  }
+  box.innerHTML=h;
+  if(type==='image'||type==='cardlink') bindUpload('blk_photo');
+  if(type==='album'){ renderPhotoEditor(); bindAlbumControls(); }
+  if(type==='cards'){ renderCardsEditor(); $('#cards_add').onclick=()=>{EDIT_CARDS.push({photo:'',title:'',desc:'',link:''});renderCardsEditor();}; }
+  if(type==='buttons'){ renderButtonsEditor(); $('#btn_add').onclick=()=>{EDIT_BUTTONS.push({label:'',link:''});renderButtonsEditor();}; }
+  if(type==='mediatext'){
+    const sel=$('#blk_mtype');
+    const fillMedia=()=>{
+      const box=$('#mtMedia'); if(!box) return;
+      const mt=sel.value;
+      if(mt==='image'){
+        box.innerHTML=imgField('blk_photo',it.photo,'รูปภาพ'); bindUpload('blk_photo');
+      }else if(mt==='album'){
+        box.innerHTML=`<div class="field"><label>รูปในอัลบั้ม (Carousel)</label><div class="editor-list" id="photoEditor"></div>
+          <div class="uprow"><input type="file" id="ph_file" accept="image/*" multiple></div>
+          <input type="url" id="ph_url" placeholder="หรือวางลิงก์รูป แล้วกดปุ่มเพิ่ม" style="margin-top:8px">
+          <button type="button" class="add-mini" id="ph_add">+ เพิ่มลิงก์รูป</button>
+          <div class="hint">อัปโหลดหลายรูปได้ • ใส่ “ลิงก์เมื่อกดรูป” ต่อรูปได้ • กด ↑ สลับลำดับ</div></div>`;
+        renderPhotoEditor(); bindAlbumControls();
+      }else{
+        box.innerHTML=field('ลิงก์/โค้ดฝัง',`<input type="url" id="blk_embed" value="${attr(it.embed)}" placeholder="วาง URL หรือโค้ด <iframe>">`,'รองรับ YouTube, Google Maps, Google Form ฯลฯ');
+      }
+    };
+    fillMedia(); sel.onchange=fillMedia;
+  }
+}
+/* ตัวแก้ไขหลายรูป (อัลบั้ม) */
+function bindAlbumControls(){
+  const f=$('#ph_file');
+  if(f) f.onchange=async()=>{
+    const files=[...f.files]; if(!files.length) return;
+    showUploading('กำลังอัปโหลดรูป…');           // ค้าง overlay ไว้ตลอดทั้งชุด (refcount)
+    let ok=0;
+    for(let k=0;k<files.length;k++){
+      const url=await uploadImage(files[k], `กำลังอัปโหลดรูปที่ ${k+1}/${files.length}…`);
+      if(url){ EDIT_PHOTOS.push(url); EDIT_PHOTO_LINKS.push(''); renderPhotoEditor(); ok++; }
+    }
+    hideUploading();
+    f.value=''; toast('อัปโหลดรูปเสร็จ '+ok+'/'+files.length);
+  };
+  const add=$('#ph_add');
+  if(add) add.onclick=()=>{ const u=$('#ph_url').value.trim(); if(u){ EDIT_PHOTOS.push(u); EDIT_PHOTO_LINKS.push(''); $('#ph_url').value=''; renderPhotoEditor(); } };
+}
+function renderPhotoEditor(){
+  const box=$('#photoEditor'); if(!box) return; box.innerHTML='';
+  EDIT_PHOTOS.forEach((url,idx)=>{
+    const row=document.createElement('div'); row.className='ed-photo';
+    const img=document.createElement('img'); img.referrerPolicy='no-referrer'; img.src=normImg(url);
+    const g=document.createElement('div'); g.className='grow';
+    const cap=document.createElement('div'); cap.textContent=url;
+    cap.style.cssText='font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px';
+    const lnk=document.createElement('input'); lnk.type='url'; lnk.placeholder='🔗 ลิงก์เมื่อกดรูปนี้ (ไม่บังคับ)';
+    lnk.value=EDIT_PHOTO_LINKS[idx]||''; lnk.style.cssText='width:100%;font-size:12px;padding:6px 8px';
+    lnk.oninput=()=>{ EDIT_PHOTO_LINKS[idx]=lnk.value; };
+    g.append(cap,lnk);
+    const up=document.createElement('button'); up.type='button'; up.className='rm-btn'; up.style.color='#555'; up.textContent='↑';
+    up.onclick=()=>{ if(idx>0){
+      [EDIT_PHOTOS[idx-1],EDIT_PHOTOS[idx]]=[EDIT_PHOTOS[idx],EDIT_PHOTOS[idx-1]];
+      [EDIT_PHOTO_LINKS[idx-1],EDIT_PHOTO_LINKS[idx]]=[EDIT_PHOTO_LINKS[idx],EDIT_PHOTO_LINKS[idx-1]];
+      renderPhotoEditor(); } };
+    const rm=document.createElement('button'); rm.type='button'; rm.className='rm-btn'; rm.textContent='ลบ';
+    rm.onclick=()=>{ EDIT_PHOTOS.splice(idx,1); EDIT_PHOTO_LINKS.splice(idx,1); renderPhotoEditor(); };
+    row.append(img,g,up,rm); box.appendChild(row);
+  });
+}
+/* ตัวแก้ไขการ์ดหลายใบ */
+function renderCardsEditor(){
+  const box=$('#cardsEditor'); if(!box) return; box.innerHTML='';
+  EDIT_CARDS.forEach((c,idx)=>{
+    const row=document.createElement('div'); row.className='ed-row';
+    const head=document.createElement('div'); head.className='ed-row-head'; head.innerHTML=`<span>การ์ดที่ ${idx+1}</span>`;
+    const upRow=document.createElement('div'); upRow.className='uprow';
+    const file=document.createElement('input'); file.type='file'; file.accept='image/*';
+    const thumb=document.createElement('img'); thumb.className='thumb'; thumb.referrerPolicy='no-referrer';
+    if(c.photo){ thumb.src=normImg(c.photo); thumb.style.display='block'; }
+    file.onchange=async()=>{ if(!file.files[0]) return; toast('กำลังอัปโหลด...'); const url=await uploadImage(file.files[0]); if(url){ c.photo=url; thumb.src=normImg(url); thumb.style.display='block'; toast('อัปโหลดสำเร็จ'); } };
+    upRow.append(file,thumb);
+    const ti=document.createElement('input'); ti.type='text'; ti.placeholder='หัวข้อ'; ti.value=c.title||''; ti.oninput=()=>c.title=ti.value;
+    const de=document.createElement('input'); de.type='text'; de.placeholder='คำอธิบาย (ไม่บังคับ)'; de.value=c.desc||''; de.oninput=()=>c.desc=de.value;
+    const li=document.createElement('input'); li.type='url'; li.placeholder='ลิงก์ (ไม่บังคับ)'; li.value=c.link||''; li.oninput=()=>c.link=li.value;
+    const rm=document.createElement('button'); rm.type='button'; rm.className='rm-btn'; rm.style.alignSelf='flex-start'; rm.textContent='ลบการ์ดนี้';
+    rm.onclick=()=>{ EDIT_CARDS.splice(idx,1); renderCardsEditor(); };
+    row.append(head,upRow,ti,de,li,rm); box.appendChild(row);
+  });
+}
+/* ตัวแก้ไขปุ่มลิงก์ */
+function renderButtonsEditor(){
+  const box=$('#buttonsEditor'); if(!box) return; box.innerHTML='';
+  EDIT_BUTTONS.forEach((b,idx)=>{
+    const row=document.createElement('div'); row.className='ed-row';
+    const head=document.createElement('div'); head.className='ed-row-head'; head.innerHTML=`<span>ปุ่มที่ ${idx+1}</span>`;
+    const la=document.createElement('input'); la.type='text'; la.placeholder='ข้อความบนปุ่ม'; la.value=b.label||''; la.oninput=()=>b.label=la.value;
+    const li=document.createElement('input'); li.type='url'; li.placeholder='ลิงก์ปลายทาง'; li.value=b.link||''; li.oninput=()=>b.link=li.value;
+    const rm=document.createElement('button'); rm.type='button'; rm.className='rm-btn'; rm.style.alignSelf='flex-start'; rm.textContent='ลบปุ่มนี้';
+    rm.onclick=()=>{ EDIT_BUTTONS.splice(idx,1); renderButtonsEditor(); };
+    row.append(head,la,li,rm); box.appendChild(row);
+  });
+}
+
+/* ============================================================
+   Modal helper
+   ============================================================ */
+function openModal(title,bodyHTML,footHTML){
+  $('#mTitle').textContent=title; $('#mBody').innerHTML=bodyHTML; $('#mFoot').innerHTML=footHTML;
+  $('#overlay').classList.add('show');
+}
+function closeModal(){ $('#overlay').classList.remove('show'); }
+$('#mClose').onclick=closeModal;
+// ไม่ปิด modal เมื่อคลิกพื้นหลัง (กันงานที่ยังทำไม่เสร็จหายโดยไม่ตั้งใจ) — ปิดได้เฉพาะปุ่มกากบาท/ปุ่มในฟุตเตอร์
+
+function field(label,inner,hint){return `<div class="field"><label>${label}</label>${inner}${hint?`<div class="hint">${hint}</div>`:''}</div>`;}
+function imgField(id,val,label){
+  return `<div class="field"><label>${label||'รูปภาพ'}</label>
+    <div class="uprow">
+      <input type="file" id="${id}_file" accept="image/*">
+      <img class="thumb" id="${id}_thumb" referrerpolicy="no-referrer" ${val?`src="${normImg(val)}" style="display:block"`:''}>
+    </div>
+    <input type="url" id="${id}" placeholder="หรือวางลิงก์รูปที่นี่" value="${val||''}" style="margin-top:8px">
+    <div class="hint">เลือกไฟล์เพื่ออัปโหลดขึ้น Google Drive (ต้องตั้งค่า GAS) หรือวางลิงก์รูปเอง</div>
+  </div>`;
+}
+function bindUpload(id){
+  const f=$('#'+id+'_file'); if(!f) return;
+  f.onchange=async()=>{
+    if(!f.files[0]) return;
+    toast('กำลังอัปโหลด...');
+    const url=await uploadImage(f.files[0]);
+    if(url){ const inp=$('#'+id); inp.value=url; const t=$('#'+id+'_thumb'); t.src=normImg(url); t.style.display='block';
+      inp.dispatchEvent(new Event('input')); toast('อัปโหลดสำเร็จ'); }
+  };
+}
+
+/* ----- ฟอร์มการ์ด ----- */
+function cardForm(col,item){
+  const it=item||{};
+  const mode=it.linkMode||'none';
+  const size=it.size||'normal';
+  openModal(item?'แก้ไขรายการ':'เพิ่มรายการ',
+    field('ชื่อ',`<input type="text" id="c_name" value="${attr(it.name)}">`)+
+    field('ตำแหน่ง',`<input type="text" id="c_role" value="${attr(it.role)}">`)+
+    field('หน้าที่/หมายเหตุ',`<textarea id="c_duty" style="min-height:80px">${esc(it.duty)}</textarea>`,'ใส่ได้ยาว เคาะขึ้นบรรทัดใหม่ได้ — บนการ์ดจะย่อ 3 บรรทัดและมีปุ่ม “เพิ่มเติม” ให้กดขยาย')+
+    imgField('c_photo',it.photo)+
+    field('ขนาดการ์ด (เน้นตำแหน่ง)',`<select id="c_size">
+      <option value="lg" ${size==='lg'?'selected':''}>ใหญ่ — เด่นเต็มแถว (เช่น หัวหน้ากลุ่ม)</option>
+      <option value="normal" ${size==='normal'?'selected':''}>ปกติ</option>
+      <option value="sm" ${size==='sm'?'selected':''}>เล็ก — กะทัดรัด</option>
+    </select>`,'การ์ด “ใหญ่” จะแสดงเต็มความกว้าง ภาพใหญ่ เหมาะกับการเน้นผู้บริหาร/หัวหน้า')+
+    `<div style="border-top:1px solid var(--line);margin:8px 0 14px"></div>`+
+    field('ลิงก์ปลายทาง (ไม่บังคับ)',`<input type="url" id="c_link" value="${attr(it.link)}" placeholder="https://...">`)+
+    field('รูปแบบการเปิดลิงก์',`<select id="c_linkmode">
+      <option value="none" ${mode==='none'?'selected':''}>ไม่มีลิงก์</option>
+      <option value="card" ${mode==='card'?'selected':''}>กดที่การ์ดทั้งใบ</option>
+      <option value="button" ${mode==='button'?'selected':''}>แสดงเป็นปุ่ม</option>
+    </select>`)+
+    field('ข้อความบนปุ่ม (ถ้าเลือกแบบปุ่ม)',`<input type="text" id="c_linklabel" value="${attr(it.linkLabel)}" placeholder="เช่น อ่านเพิ่มเติม">`),
+    `<button class="btn ghost" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn primary" id="saveCard">บันทึก</button>`);
+  bindUpload('c_photo');
+  $('#saveCard').onclick=async()=>{
+    const data={name:$('#c_name').value.trim(),role:$('#c_role').value.trim(),
+      duty:$('#c_duty').value.trim(),photo:$('#c_photo').value.trim(),
+      size:$('#c_size').value,
+      link:$('#c_link').value.trim(), linkMode:$('#c_linkmode').value,
+      linkLabel:$('#c_linklabel').value.trim(),
+      order:it.order||Date.now(), tabId:activeTab.id};
+    await saveItem(col,item,data); closeModal(); renderMain(); toast('บันทึกแล้ว');
+  };
+}
+/* ----- ฟอร์มลิงก์ ----- */
+function linkForm(col,item){
+  const it=item||{};
+  openModal(item?'แก้ไขฟอร์ม/ลิงก์':'เพิ่มฟอร์ม/ลิงก์',
+    field('ชื่อ',`<input type="text" id="l_title" value="${attr(it.title)}">`)+
+    field('คำอธิบาย',`<input type="text" id="l_desc" value="${attr(it.desc)}">`)+
+    field('ลิงก์ (URL)',`<input type="url" id="l_url" value="${attr(it.url)}" placeholder="https://forms.gle/...">`)+
+    field('ฝังฟอร์ม (embed) — ไม่บังคับ',`<input type="url" id="l_embed" value="${attr(it.embed)}" placeholder="วาง URL หรือโค้ด <iframe> ของ Google Form">`,
+      'วางได้ทั้ง URL หรือโค้ด iframe เต็มจาก Google Form (ปุ่ม "ส่ง" > "ฝัง HTML") ระบบจะดึง src ให้เอง'),
+    `<button class="btn ghost" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn primary" id="saveLink">บันทึก</button>`);
+  $('#saveLink').onclick=async()=>{
+    const data={title:$('#l_title').value.trim(),desc:$('#l_desc').value.trim(),
+      url:$('#l_url').value.trim(),embed:$('#l_embed').value.trim(),
+      order:it.order||Date.now(), tabId:activeTab.id};
+    await saveItem(col,item,data); closeModal(); renderMain(); toast('บันทึกแล้ว');
+  };
+}
+/* ----- ฟอร์มเอกสาร/ไฟล์ ----- */
+function fileForm(col,item){
+  const it=item||{};
+  const hasFile=!!it.fileId;
+  const k=fileKind(it.fileName,it.fileType);
+  openModal(item?'แก้ไขเอกสาร/ไฟล์':'เพิ่มเอกสาร/ไฟล์',
+    field('ชื่อที่แสดง',`<input type="text" id="fl_title" value="${attr(it.title)}" placeholder="เช่น คู่มือการใช้งาน">`)+
+    field('คำอธิบาย (ไม่บังคับ)',`<input type="text" id="fl_desc" value="${attr(it.desc)}">`)+
+    `<div class="field"><label>ไฟล์เอกสาร (PDF / Word / Excel / PowerPoint)</label>
+      <div class="uprow">
+        <input type="file" id="fl_file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation">
+      </div>
+      <div class="hint" id="fl_state">${hasFile?`ไฟล์ปัจจุบัน: ${esc(it.fileName||'')} (${k.label}) — เลือกไฟล์ใหม่เพื่อแทนที่`:'เลือกไฟล์เพื่ออัปโหลดขึ้น Google Drive (ต้องตั้งค่า GAS + โฟลเดอร์)'}</div>
+    </div>
+    <input type="hidden" id="fl_id" value="${attr(it.fileId)}">
+    <input type="hidden" id="fl_name" value="${attr(it.fileName)}">
+    <input type="hidden" id="fl_type" value="${attr(it.fileType)}">
+    <input type="hidden" id="fl_size" value="${attr(it.fileSize||'')}">`,
+    `<button class="btn ghost" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn primary" id="saveFile">บันทึก</button>`);
+  bindDocUpload();
+  $('#saveFile').onclick=async()=>{
+    const fileId=$('#fl_id').value.trim();
+    if(!fileId){ toast('กรุณาเลือกและรอให้อัปโหลดไฟล์เสร็จก่อน'); return; }
+    const data={
+      title:$('#fl_title').value.trim(),
+      desc:$('#fl_desc').value.trim(),
+      fileId, fileName:$('#fl_name').value.trim(),
+      fileType:$('#fl_type').value.trim(),
+      fileSize:Number($('#fl_size').value)||0,
+      order:it.order||Date.now(), tabId:activeTab.id};
+    await saveItem(col,item,data); closeModal(); renderMain(); toast('บันทึกแล้ว');
+  };
+}
+// ผูกการอัปโหลดไฟล์เอกสารกับช่อง fl_file
+function bindDocUpload(){
+  const f=$('#fl_file'); if(!f) return;
+  f.onchange=async()=>{
+    if(!f.files[0]) return;
+    const st=$('#fl_state'); if(st) st.textContent='⏳ กำลังอัปโหลดไฟล์… (อาจใช้เวลาสองสามวินาที)';
+    const r=await uploadDoc(f.files[0]);
+    if(r){
+      $('#fl_id').value=r.id; $('#fl_name').value=r.name;
+      $('#fl_type').value=r.type; $('#fl_size').value=r.size;
+      const k=fileKind(r.name,r.type);
+      if(st) st.textContent=`✅ อัปโหลดแล้ว: ${r.name} (${k.label}, ${fileSize(r.size)})`;
+      // เติมชื่อที่แสดงให้อัตโนมัติถ้ายังว่าง
+      if(!$('#fl_title').value.trim()) $('#fl_title').value=r.name.replace(/\.[^.]+$/,'');
+      toast('อัปโหลดไฟล์สำเร็จ');
+    }else if(st){ st.textContent='❌ อัปโหลดไม่สำเร็จ ลองใหม่อีกครั้ง'; }
+  };
+}
+/* ----- ฟอร์มข่าว ----- */
+function newsForm(col,item){
+  const it=item||{};
+  const kind=it.type==='feed'?'feed':'manual';
+  openModal(item?'แก้ไขข่าว':'เพิ่มข่าว/ประกาศ',
+    field('ประเภท',`<select id="nw_kind">
+       <option value="manual" ${kind==='manual'?'selected':''}>📝 พิมพ์ข่าว/ประกาศเอง</option>
+       <option value="feed" ${kind==='feed'?'selected':''}>📡 ดึงข่าวสดจากเว็บอื่น (RSS)</option>
+     </select>`)+
+    `<div id="nwFields"></div>`,
+    `<button class="btn ghost" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn primary" id="saveNews">บันทึก</button>`);
+  const draw=()=>{
+    const k=$('#nw_kind').value;
+    if(k==='feed'){
+      $('#nwFields').innerHTML=
+        field('ชื่อหัวข้อหมวด',`<input type="text" id="nw_title" value="${attr(it.title)}" placeholder="เช่น ข่าวการศึกษาล่าสุด">`)+
+        field('ลิงก์ RSS / Feed',`<input type="url" id="nw_feed" value="${attr(it.feedUrl)}" placeholder="https://...">`,
+          'วางลิงก์ RSS ของเว็บข่าว เช่น กระทรวงศึกษาฯ, ไทยรัฐ ฯลฯ')+
+        field('จำนวนข่าวที่แสดง',`<input type="number" id="nw_max" min="1" max="20" value="${it.max||6}">`)+
+        `<label style="display:flex;align-items:center;gap:8px;font-weight:500;cursor:pointer;margin:2px 0 8px">
+           <input type="checkbox" id="nw_showimg" ${it.showImg!==false?'checked':''} style="width:18px;height:18px;flex:0 0 auto"> แสดงรูปภาพประกอบข่าว</label>`+
+        `<div class="sb-hint" style="margin:0">💡 ดึงข่าวตามคำค้นฟรีจาก <b>Google News</b> ด้วยลิงก์:<br>
+           <code style="word-break:break-all;font-size:11.5px">https://news.google.com/rss/search?q=คำค้น&hl=th&gl=TH&ceid=TH:th</code><br>
+           เปลี่ยน “คำค้น” เป็นเรื่องที่ต้องการ • ข่าวอัปเดตตามต้นทางอัตโนมัติ<br><br>
+           ⚠️ <b>ข้อควรรู้เรื่อง Google News:</b> ต้นทางมัก “บล็อกชั่วคราว” คำขอที่มาจากพร็อกซีฟรี (ตอบ 429/หน้า consent) จึงเกิดอาการ <b>เช้าใช้ได้ บ่ายใช้ไม่ได้</b> และหายไปหลายชั่วโมง — เป็นที่ฝั่ง Google ไม่ใช่เว็บนี้ ส่วนฟีดเว็บไทยทั่วไป (เช่น Sanook) ไม่โดนแบบนี้จึงดึงผ่านตลอด<br><br>
+           ⭐ <b>ให้เสถียรที่สุด:</b> ตั้งค่า <b>Apps Script URL</b> (หมวด 🔐 ในแผงเครื่องมือ) ให้เรียบร้อย ระบบจะดึงข่าวผ่าน GAS ของคุณเอง (รันบนเซิร์ฟเวอร์ Google + มีแคช ไม่ติด CORS/ลิมิตพร็อกซีฟรี — แก้อาการนี้ได้ตรงจุดที่สุด) — ถ้าเพิ่งอัปเดตโค้ด GAS อย่าลืม <b>Manage deployments → New version → Deploy</b></div>`;
+    }else{
+      $('#nwFields').innerHTML=
+        field('หัวข้อ',`<input type="text" id="nw_title" value="${attr(it.title)}">`)+
+        field('วันที่',`<input type="date" id="nw_date" value="${attr(it.date)}">`)+
+        field('เนื้อหา',`<textarea id="nw_body" style="min-height:140px">${esc(it.body||'')}</textarea>`)+
+        imgField('nw_img',it.image);
+      bindUpload('nw_img');
+    }
+  };
+  $('#nw_kind').onchange=draw; draw();
+  $('#saveNews').onclick=async()=>{
+    const k=$('#nw_kind').value;
+    let data;
+    if(k==='feed'){
+      const feedUrl=($('#nw_feed').value||'').trim();
+      if(!feedUrl){ toast('กรุณาวางลิงก์ RSS'); return; }
+      data={type:'feed', title:$('#nw_title').value.trim()||'ข่าวสด',
+        feedUrl, max:Math.max(1,Math.min(20,parseInt($('#nw_max').value,10)||6)),
+        showImg:$('#nw_showimg').checked, order:it.order||Date.now()};
+    }else{
+      data={type:'manual', title:$('#nw_title').value.trim(), date:$('#nw_date').value,
+        body:$('#nw_body').value.trim(), image:$('#nw_img').value.trim()};
+    }
+    await saveItem(col,item,data); closeModal(); renderMain(); toast('บันทึกแล้ว');
+  };
+}
+/* ----- แก้เนื้อหาอิสระ ----- */
+function editContentBlock(path,current){
+  openModal('แก้ไขเนื้อหา',
+    field('เนื้อหา',`<textarea id="cc_html" style="min-height:200px">${esc(current)}</textarea>`,'เว้นบรรทัดได้ตามปกติ'),
+    `<button class="btn ghost" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn primary" id="saveCC">บันทึก</button>`);
+  $('#saveCC').onclick=async()=>{
+    await Store.setDoc(path,{html:$('#cc_html').value}); closeModal(); renderMain(); toast('บันทึกแล้ว');
+  };
+}
+
+async function saveItem(col,item,data){
+  if(item){ await Store.updateCol(col,item.id,data); }
+  else {
+    if(data.createdAt==null) data.createdAt=Date.now();  // เก็บเวลาสร้างไว้ (ใช้กับระบบล้างข้อมูล)
+    data.order=-Date.now();                              // ใหม่สุดอยู่บนสุด (เรียงจากน้อย→มาก)
+    await Store.addCol(col,data);
+  }
+}
+function confirmDel(col,id){
+  openModal('ยืนยันการลบ',`<p>ต้องการลบรายการนี้ใช่หรือไม่? การลบไม่สามารถย้อนกลับได้</p>`,
+    `<button class="btn ghost" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn primary" id="doDel" style="background:#c0392b">ลบ</button>`);
+  $('#doDel').onclick=async()=>{ await Store.removeCol(col,id); closeModal(); renderMain(); toast('ลบแล้ว'); };
+}
+
+/* ============================================================
+   เพิ่ม/ลบแท็บ
+   ============================================================ */
+function openAddTab(){
+  openModal('เพิ่มแท็บใหม่',
+    field('ชื่อแท็บ',`<input type="text" id="t_title" placeholder="เช่น ผลงาน/กิจกรรม">`)+
+    field('ชนิดของแท็บ',`<select id="t_type">
+      <option value="content">เนื้อหาอิสระ (บล็อกครบเหมือนหน้าหลัก)</option>
+      <option value="cards">การ์ด/รายชื่อ (มีรูป)</option>
+      <option value="links">ลิงก์/ฟอร์ม</option>
+      <option value="files">เอกสาร/ไฟล์ (PDF/Word/Excel)</option>
+      <option value="gallery">ภาพกิจกรรม (รูปเดี่ยว/อัลบั้ม/การ์ดลิงก์)</option>
+      <option value="news">ข่าว/ประกาศ</option>
+    </select>`),
+    `<button class="btn ghost" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn primary" id="saveTab">เพิ่ม</button>`);
+  $('#saveTab').onclick=async()=>{
+    const title=$('#t_title').value.trim()||'แท็บใหม่';
+    const type=$('#t_type').value;
+    const order=(Math.max(0,...TABS.map(t=>t.order||0)))+1;
+    closeModal();
+    showUploading('กำลังสร้างแท็บใหม่…');
+    try{
+      const id=await Store.addCol('tabs',{title,type,order});
+      await loadTabs(); activeTab=TABS.find(t=>t.id===id)||activeTab;
+      renderTabs(); await renderMain();
+      if(editing) renderSidebar();
+    }finally{ hideUploading(); }
+    toast('เพิ่มแท็บแล้ว');
+  };
+}
+// ล้างเฉพาะข้อมูลที่ผูกกับแท็บนี้ (tabId ตรงกัน) — ไม่แตะคอลเลกชันที่ไม่ผูกแท็บ
+// (บุคลากร/ฟอร์ม/ข่าว ของแท็บเริ่มต้นไม่มี tabId จึงไม่ถูกลบ)
+async function cleanupTabData(tabId){
+  const cols=['tabblocks','items','linkitems','fileitems','galleryitems'];
+  for(const c of cols){
+    const list=await Store.listCol(c);
+    for(const it of list){ if(it.tabId===tabId) await Store.removeCol(c,it.id); }
+  }
+  await Store.removeDoc('content/'+tabId);   // เนื้อหาเดิม (legacy) ของแท็บเนื้อหาอิสระ ถ้ามี
+}
+function deleteTab(t){
+  openModal('ลบแท็บ',`<p>ต้องการลบแท็บ "<b>${esc(t.title)}</b>" ใช่หรือไม่?</p>
+    <p style="color:#c0392b;font-size:13.5px;margin-top:6px">⚠️ เนื้อหา/รายการทั้งหมดในแท็บนี้จะถูกลบไปด้วย และกู้คืนไม่ได้</p>`,
+    `<button class="btn ghost" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn primary" id="doDelTab" style="background:#c0392b">ลบแท็บ</button>`);
+  $('#doDelTab').onclick=async()=>{
+    closeModal();
+    showUploading('กำลังลบแท็บและเนื้อหา…');
+    try{
+      await cleanupTabData(t.id);              // ล้างบล็อก/รายการของแท็บก่อน
+      await Store.removeCol('tabs',t.id);       // แล้วจึงลบตัวแท็บ
+      await loadTabs();
+      if(activeTab&&activeTab.id===t.id) activeTab=TABS[0]||null;
+      renderTabs(); await renderMain(); if(editing) renderSidebar();
+    }finally{ hideUploading(); }
+    toast('ลบแท็บแล้ว');
+  };
+}
+
+/* ============================================================
+   โหมดผู้ดูแล (PIN) + ตั้งค่าธีม
+   ============================================================ */
+// จำสถานะยืนยันตัวตนระดับ session (กรอก PIN ครั้งเดียวจนกว่าจะปิดหน้า/แท็บ)
+function sesGet(k){ try{ return sessionStorage.getItem(k); }catch(e){ return window.__ses&&window.__ses[k]; } }
+function sesSet(k,v){ try{ sessionStorage.setItem(k,v); }catch(e){ (window.__ses=window.__ses||{})[k]=v; } }
+
+$('#gearBtn').onclick=()=>{
+  if(editing){ exitEditing(); return; }
+  if(sesGet('adminAuthed')==='1'){ enterEditing(); return; }   // ยืนยันแล้วใน session นี้ → เข้าได้เลย
+  openModal('เข้าสู่โหมดผู้ดูแล',
+    field('กรอก PIN',`<input type="password" id="pinInput" placeholder="••••" autocomplete="off">`),
+    `<button class="btn ghost" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn primary" id="pinOk">เข้าสู่ระบบ</button>`);
+  $('#pinInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('#pinOk').click();});
+  setTimeout(()=>$('#pinInput').focus(),50);
+  $('#pinOk').onclick=()=>{
+    if($('#pinInput').value===String(SITE.pin)){ sesSet('adminAuthed','1'); closeModal(); enterEditing(); }
+    else toast('PIN ไม่ถูกต้อง');
+  };
+};
+
+/* ---------- ปุ่ม QR code / แชร์ลิงก์ ---------- */
+function loadQRLib(cb){
+  if(window.QRCode){ cb(); return; }
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+  s.onload=()=>cb(); s.onerror=()=>cb(true);
+  document.head.appendChild(s);
+}
+// สร้างเอกสาร A4 (โลโก้ + ชื่อเว็บ + QR + ข้อความ "โปรด Scan เพื่อเข้าชม") พร้อมปุ่มพิมพ์/บันทึก PDF
+function openPrintA4(url, qrSrc, logoSrc, name, school){
+  const w=window.open('','_blank');
+  if(!w){ toast('เบราว์เซอร์บล็อกหน้าต่างใหม่ — กรุณาอนุญาต popup แล้วลองใหม่'); return; }
+  const logoHtml = logoSrc ? `<img class="logo" src="${logoSrc}" alt="logo">` : '';
+  const doc =
+`<!doctype html><html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QR ${esc(name)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  @page{ size:A4; margin:0; }
+  *{ box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body{ margin:0; background:#e9eee9; font-family:'Sarabun',system-ui,'Segoe UI',sans-serif; color:#1f2d27; }
+  .toolbar{ position:sticky; top:0; z-index:5; display:flex; gap:10px; justify-content:center;
+            padding:14px; background:#0f3d2e; box-shadow:0 2px 10px rgba(0,0,0,.2); }
+  .toolbar button{ font-size:16px; padding:11px 24px; border:0; border-radius:10px; cursor:pointer; font-family:inherit; }
+  .btnPrint{ background:#ffd34d; color:#3a2d00; font-weight:800; }
+  .btnClose{ background:#ffffff22; color:#fff; }
+  .sheet-wrap{ padding:18px; display:flex; justify-content:center; }
+  .page{ width:210mm; min-height:297mm; background:#fff; padding:30mm 22mm;
+         display:flex; flex-direction:column; align-items:center; justify-content:center;
+         text-align:center; box-shadow:0 8px 30px rgba(0,0,0,.15); }
+  .logo{ width:130px; height:130px; object-fit:contain; border-radius:20px; margin-bottom:16px; }
+  .name{ font-size:36px; font-weight:800; line-height:1.2; margin:0 0 6px; color:#0f3d2e; }
+  .school{ font-size:21px; font-weight:600; color:#4a6258; margin:0; }
+  .divider{ width:90px; height:5px; background:#1f8a5b; border-radius:4px; margin:20px 0 26px; }
+  .qrbox{ background:#fff; padding:20px; border:2px solid #dfe8e2; border-radius:22px; box-shadow:0 6px 22px rgba(0,0,0,.08); }
+  .qrbox img{ width:360px; height:360px; display:block; image-rendering:pixelated; }
+  .scan{ font-size:30px; font-weight:800; color:#0f3d2e; margin:30px 0 8px; letter-spacing:.5px; }
+  .url{ font-size:15px; color:#5b6b64; word-break:break-all; max-width:150mm; }
+  @media print{
+    body{ background:#fff; }
+    .toolbar{ display:none; }
+    .sheet-wrap{ padding:0; }
+    .page{ box-shadow:none; }
+  }
+</style></head>
+<body>
+  <div class="toolbar">
+    <button class="btnPrint" onclick="window.print()">🖨 พิมพ์ / บันทึก PDF</button>
+    <button class="btnClose" onclick="window.close()">ปิด</button>
+  </div>
+  <div class="sheet-wrap"><div class="page">
+    ${logoHtml}
+    <h1 class="name">${esc(name)}</h1>
+    ${school ? `<div class="school">${esc(school)}</div>` : ''}
+    <div class="divider"></div>
+    <div class="qrbox"><img src="${qrSrc}" alt="QR code"></div>
+    <div class="scan">โปรด Scan เพื่อเข้าชม</div>
+    <div class="url">${esc(url)}</div>
+  </div></div>
+</body></html>`;
+  w.document.open(); w.document.write(doc); w.document.close();
+}
+
+$('#qrBtn').onclick=()=>{
+  const url=location.href.split('#')[0];
+  openModal('QR code / แชร์ลิงก์เว็บ',
+    `<div class="qr-wrap">
+       <div class="qr-canvas" id="qrCanvas">กำลังสร้าง QR…</div>
+       <div class="qr-url" id="qrUrl">${esc(url)}</div>
+       <div class="qr-acts">
+         <button class="btn ghost" id="qrCopy">📋 คัดลอกลิงก์</button>
+         <button class="btn ghost" id="qrPrint">🖨 พิมพ์ A4</button>
+         <button class="btn primary" id="qrDl">⬇ ดาวน์โหลด QR</button>
+       </div>
+     </div>`,
+    `<button class="btn ghost" onclick="closeModal()">ปิด</button>`);
+  $('#qrCopy').onclick=async()=>{
+    try{ await navigator.clipboard.writeText(url); toast('คัดลอกลิงก์แล้ว'); }
+    catch(e){ const t=document.createElement('textarea'); t.value=url; document.body.appendChild(t); t.select();
+      try{document.execCommand('copy'); toast('คัดลอกลิงก์แล้ว');}catch(_){toast('คัดลอกไม่สำเร็จ');} t.remove(); }
+  };
+  const box=$('#qrCanvas');
+  $('#qrPrint').onclick=()=>{
+    // หา src ของ QR ปัจจุบัน (canvas -> dataURL, ไม่งั้นใช้ img, สำรองด้วยบริการออนไลน์ความละเอียดสูง)
+    let qrSrc='';
+    const c=box.querySelector('canvas');
+    if(c){ try{ qrSrc=c.toDataURL('image/png'); }catch(e){} }
+    if(!qrSrc){ const im=box.querySelector('img'); if(im) qrSrc=im.src; }
+    if(!qrSrc){ qrSrc='https://api.qrserver.com/v1/create-qr-code/?size=600x600&data='+encodeURIComponent(url); }
+    const logoSrc = SITE.logo ? normImg(SITE.logo) : '';
+    openPrintA4(url, qrSrc, logoSrc, SITE.name||'', SITE.school||'');
+  };
+  loadQRLib((failed)=>{
+    box.innerHTML='';
+    if(!failed && window.QRCode){
+      new QRCode(box,{text:url,width:230,height:230,colorDark:'#1f4d3a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+      $('#qrDl').onclick=()=>{
+        const c=box.querySelector('canvas');
+        const src=c?c.toDataURL('image/png'):(box.querySelector('img')||{}).src;
+        if(src){ const a=document.createElement('a'); a.href=src; a.download='qrcode.png'; a.click(); }
+      };
+    }else{
+      // สำรอง: ใช้บริการสร้าง QR ออนไลน์
+      const api='https://api.qrserver.com/v1/create-qr-code/?size=230x230&data='+encodeURIComponent(url);
+      box.innerHTML=`<img src="${api}" width="230" height="230" alt="QR">`;
+      $('#qrDl').onclick=()=>{ const a=document.createElement('a'); a.href=api; a.download='qrcode.png'; a.target='_blank'; a.click(); };
+    }
+  });
+};
+
+/* ---------- ปุ่มคู่มือการตั้งค่า ---------- */
+$('#guideBtn').onclick=()=>{
+  openModal('คู่มือการตั้งค่าเว็บ (ฉบับเข้าใจง่าย)',
+    `<div class="guide">
+      <div class="step"><div class="n">1</div><div class="c"><b>เข้าโหมดผู้ดูแล</b><br>กดปุ่มเฟือง ⚙️ มุมขวาบน หน้าจอจะแบ่งเป็น 2 ฝั่ง: <b>ซ้าย = หน้าเว็บจริง</b> (แก้ตรงไหนเห็นผลตรงนั้น), <b>ขวา = แผงเครื่องมือ</b></div></div>
+      <div class="step"><div class="n">2</div><div class="c"><b>ปรับรูปลักษณ์เว็บ</b> (หมวด 🎨 ในแผงขวา)<br>ตั้งชื่อเว็บ, อัปโหลด<b>โลโก้/รูปหน้าปก/รูป Header</b>, ปรับสว่าง-มืด, เลือกสี/ฟอนต์ — <b>เห็นผลทันทีฝั่งซ้าย</b> แล้วกด “บันทึกการตั้งค่า” ด้านล่างแผง</div></div>
+      <div class="step"><div class="n">3</div><div class="c"><b>เชื่อมต่อเพื่อบันทึกถาวร</b> (หมวด 🔐)<br>วาง <b>Firebase config</b> ในโค้ด CONFIG และวาง <b>Apps Script URL</b> + <b>Folder ID</b> ของ Google Drive เพื่อให้<b>อัปโหลดรูป/ไฟล์</b>ได้ (ดูวิธีในภาคผนวกท้ายไฟล์)</div></div>
+      <div class="step"><div class="n">4</div><div class="c"><b>จัดการแท็บเมนู</b> (หมวด 🗂️)<br>เพิ่ม/เปลี่ยนชื่อ/จัดลำดับ (▲▼)/ลบแท็บได้จากแผงขวา เลือกชนิด: เนื้อหาอิสระ, การ์ด/รายชื่อ, ลิงก์/ฟอร์ม, เอกสาร/ไฟล์, ภาพกิจกรรม หรือ ข่าว/ประกาศ</div></div>
+      <div class="step"><div class="n">5</div><div class="c"><b>ใส่/แก้เนื้อหา</b> (หมวด 🧩)<br>กดปุ่ม “เพิ่ม…” ในแผงขวาเพื่อเพิ่มบล็อก/รายการ • หรือกดปุ่ม “แก้ไข/ลบ” ที่อยู่บนแต่ละรายการในหน้าเว็บฝั่งซ้ายได้โดยตรง</div></div>
+      <div class="step"><div class="n">6</div><div class="c"><b>แชร์เว็บ</b><br>กดปุ่ม 🔳 เพื่อเอา <b>QR code</b> และลิงก์ไปแชร์/ติดป้ายได้</div></div>
+      <div class="tip">💡 จอมือถือ/แท็บเล็ต: แผงเครื่องมือจะกลายเป็นลิ้นชักเลื่อนจากขวา กดปุ่มลอย 🎛️ มุมขวาล่างเพื่อเปิด-ปิด</div>
+    </div>`,
+    `<button class="btn primary" onclick="closeModal()">เข้าใจแล้ว</button>`);
+};
+/* ===== ค้นหาทั้งเว็บ (topbar) ===== */
+function goToTab(id){
+  const t=TABS.find(x=>x.id===id); if(!t) return;
+  activeTab=t; closeModal(); renderTabs(); renderMain(); if(editing) renderSidebar();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+// รวบรวมเนื้อหาทุกแท็บมาเป็นดัชนีค้นหา (title + ข้อความ + แท็บปลายทาง)
+async function buildSearchIndex(){
+  const idx=[];
+  const byId=id=>TABS.find(t=>t.id===id);
+  const byType=ty=>TABS.find(t=>t.type===ty);
+  const push=(tab,ic,title,snippet,extra)=>{ if(!tab||!(title||snippet))return;
+    idx.push({tabId:tab.id,tabTitle:tab.title,ic,title:title||'',snippet:snippet||'',...(extra||{})}); };
+  const L=async c=>{ try{ return await Store.listCol(c); }catch(e){ return []; } };
+  (await L('personnel')).forEach(it=>push(byType('personnel'),'👤',it.name,[it.role,it.duty].filter(Boolean).join(' • ')));
+  (await L('items')).forEach(it=>push(byId(it.tabId),'🪪',it.name,[it.role,it.duty].filter(Boolean).join(' • ')));
+  (await L('forms')).forEach(it=>push(byType('forms'),'📝',it.title,it.desc));
+  (await L('linkitems')).forEach(it=>push(byId(it.tabId),'🔗',it.title,it.desc));
+  (await L('fileitems')).forEach(it=>push(byId(it.tabId),'📎',it.title||it.fileName,it.desc,{fileId:it.fileId}));
+  (await L('galleryitems')).forEach(it=>push(byId(it.tabId),'🖼️',it.title||it.caption,it.desc));
+  (await L('news')).filter(i=>i.type!=='feed').forEach(it=>push(byType('news'),'📰',it.title,it.desc));
+  const bt=b=>[b.heading,b.text,b.gtitle,b.gbody,b.caption,
+    (b.cards||[]).map(c=>(c.title||'')+' '+(c.desc||'')).join(' '),
+    (b.buttons||[]).map(x=>x.label).join(' ')].filter(Boolean).join(' ');
+  (await L('homeblocks')).forEach(b=>push(byType('home'),'🧩',b.heading||b.gtitle||TYPE_LABELS[b.type]||'บล็อก',bt(b)));
+  (await L('tabblocks')).forEach(b=>push(byId(b.tabId),'🧩',b.heading||b.gtitle||TYPE_LABELS[b.type]||'บล็อก',bt(b)));
+  return idx;
+}
+async function openSiteSearch(initial){
+  openModal('ค้นหาในเว็บ',
+    `<input type="search" id="ss_q" placeholder="พิมพ์คำค้น เช่น ชื่อเอกสาร ชื่อบุคลากร หัวข้อ…" autocomplete="off"
+       style="width:100%;height:44px;border:1px solid var(--line);border-radius:12px;padding:0 14px;font-size:15px;outline:none">
+     <div class="srch-res" id="ss_res"><div class="empty" style="border:0">กำลังเตรียมข้อมูล…</div></div>`,
+    `<button class="btn ghost" onclick="closeModal()">ปิด</button>`);
+  const inp=$('#ss_q'), res=$('#ss_res');
+  inp.value=initial||''; inp.focus();
+  const index=await buildSearchIndex();
+  const run=()=>{
+    const q=inp.value.trim().toLowerCase();
+    if(!q){ res.innerHTML=`<div class="empty" style="border:0">พิมพ์เพื่อค้นหาเนื้อหาทั้งเว็บ</div>`; return; }
+    const hits=index.filter(x=>(x.title+' '+x.snippet+' '+x.tabTitle).toLowerCase().includes(q)).slice(0,60);
+    if(!hits.length){ res.innerHTML=`<div class="empty" style="border:0">ไม่พบ “${esc(inp.value.trim())}”</div>`; return; }
+    res.innerHTML=hits.map((h,i)=>`<button class="srch-item" data-i="${i}">
+        <span class="si-ic">${h.ic}</span>
+        <span style="min-width:0">
+          <span class="si-tab">${esc(h.tabTitle)}${h.fileId?' • ไฟล์':''}</span>
+          <div class="si-t">${esc(h.title||'(ไม่มีหัวข้อ)')}</div>
+          ${h.snippet?`<div class="si-s">${esc(h.snippet)}</div>`:''}
+        </span></button>`).join('');
+    res.querySelectorAll('.srch-item').forEach(b=>b.onclick=()=>{
+      const h=hits[+b.dataset.i];
+      if(h.fileId){ window.open('https://drive.google.com/file/d/'+h.fileId+'/view','_blank','noopener'); return; }
+      goToTab(h.tabId);
+    });
+  };
+  inp.oninput=run; run();
+}
+{
+  const ss=document.getElementById('siteSearch');
+  if(ss){
+    ss.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); openSiteSearch(ss.value.trim()); }});
+    ss.addEventListener('search',()=>{ if(ss.value.trim()) openSiteSearch(ss.value.trim()); });
+  }
+}
+
+function enterEditing(){ editing=true; document.body.classList.add('editing'); renderSidebar(); renderTabs(); renderMain(); setTimeout(stickyLayout,0); toast('เข้าสู่โหมดผู้ดูแลแล้ว'); }
+function exitEditing(){ editing=false; document.body.classList.remove('editing');
+  const sb=$('#sidebar'); sb.classList.remove('open','collapsed'); sb.innerHTML='';
+  renderTabs(); renderMain(); setTimeout(stickyLayout,0); }
+// เปิด/ปิดแผงเครื่องมือ (จอกว้าง=ยุบคอลัมน์, จอแคบ=เลื่อนลิ้นชัก)
+function toggleSidebar(){
+  const sb=$('#sidebar');
+  if(window.matchMedia('(max-width:900px)').matches) sb.classList.toggle('open');
+  else { sb.classList.toggle('collapsed'); setTimeout(stickyLayout,0); }
+}
+$('#exitEdit').onclick=exitEditing;
+
+// ปุ่ม "แผงเครื่องมือ" และปุ่มลอย -> เปิด/ปิด Sidebar
+$('#themeBtn').onclick=toggleSidebar;
+$('#sbFab').onclick=toggleSidebar;
+
+/* ============================================================
+   ★ แผงเครื่องมือผู้ดูแล (Sticky Sidebar)
+   แทน "เมนูตั้งค่า" แบบ modal เดิม — แบ่งเป็นหมวด (accordion)
+   แก้ฝั่งขวา เห็นผลทันทีบนหน้าเว็บฝั่งซ้าย (WYSIWYG)
+   ============================================================ */
+let SB_OPEN={appearance:true, content:true};   // จำว่าเปิดหมวดไหนค้างไว้
+function acc(id,icon,title,body){
+  const open=(id in SB_OPEN)?SB_OPEN[id]:false;
+  return `<div class="sb-sec${open?' open':''}" data-acc="${id}">
+    <button class="sb-head" data-toggle="${id}"><span class="sb-ic">${icon}</span>
+      <span class="sb-h-t">${title}</span><span class="sb-chev">▾</span></button>
+    <div class="sb-body">${body}</div></div>`;
+}
+function addLabelForTab(type){
+  const k=TAB_KINDS[type]||{};
+  if(type==='home') return '➕ เพิ่มบล็อกเนื้อหาหน้าหลัก';
+  if(k.kind==='content') return '➕ เพิ่มบล็อกเนื้อหา';
+  if(k.kind==='card')    return '➕ เพิ่มการ์ด/รายชื่อ';
+  if(k.kind==='link')    return '➕ เพิ่มฟอร์ม/ลิงก์';
+  if(k.kind==='file')    return '➕ เพิ่มเอกสาร/ไฟล์';
+  if(k.kind==='gallery') return '➕ เพิ่มภาพกิจกรรม';
+  if(k.kind==='news')    return '➕ เพิ่มข่าว/ประกาศ';
+  return '➕ เพิ่มรายการ';
+}
+function renderSidebar(){
+  const sb=$('#sidebar'); if(!editing){ sb.innerHTML=''; return; }
+  sb.innerHTML=`
+    <div class="sb-top">
+      <div class="sb-title">🎛️ แผงควบคุมผู้ดูแล</div>
+      <button class="sb-exit" id="sbExit">✕ ออก</button>
+    </div>
+    <div class="sb-scroll" id="sbScroll"></div>
+    <div class="sb-foot"><button class="sb-btn primary" id="sbSaveAll">💾 บันทึกการตั้งค่าทั้งหมด</button></div>`;
+  $('#sbScroll').innerHTML = secAppearance()+secAnnounce()+secTabs()+secContent()+secConnect()+secCleanup();
+  bindSidebar();
+}
+/* ---- หมวด: รูปลักษณ์เว็บ ---- */
+function secAppearance(){
+  return acc('appearance','🎨','รูปลักษณ์เว็บ',
+    field('ชื่อกลุ่มงาน',`<input type="text" id="sb_name" value="${attr(SITE.name)}">`)+
+    field('ชื่อโรงเรียน',`<input type="text" id="sb_school" value="${attr(SITE.school)}">`)+
+    field('คำขวัญ/สโลแกน',`<input type="text" id="sb_tag" value="${attr(SITE.tagline)}">`)+
+    imgField('sb_logo',SITE.logo,'โลโก้ (เป็นไอคอนเว็บด้วย)')+
+    imgField('sb_cover',SITE.cover,'รูปหน้าปก (พื้นหลังหน้าแรก)')+
+    `<label style="display:flex;align-items:center;gap:8px;font-weight:500;cursor:pointer;margin:4px 0 8px">
+       <input type="checkbox" id="sb_headersys" ${SITE.headerSys?'checked':''} style="width:18px;height:18px;flex:0 0 auto"> ✨ ใช้ banner จากระบบ (แอนิเมชันแนว tech + ชื่อเว็บกลางจอ)</label>
+     <div class="sb-hint" style="margin:-4px 0 8px">เปิดแล้วจะแสดงแบนเนอร์เคลื่อนไหวอัตโนมัติ (ใช้ชื่อเว็บ + สโลแกน) แทนรูปที่อัปโหลด</div>
+     <div class="color-row" style="margin-bottom:6px">
+       ${field('สีพื้นแบนเนอร์',`<input type="color" id="sb_hbg" value="${attr(SITE.headerBgColor)}">`)}
+       ${field('สีตัวอักษร',`<input type="color" id="sb_htext" value="${attr(SITE.headerTextColor)}">`)}
+     </div>
+     <div class="sb-hint" style="margin:-2px 0 10px">เอฟเฟกต์อื่น ๆ (กริด/ดวงแสง/จุดประกาย/เส้นใต้ชื่อ) จะไล่เฉดตาม “สีตัวอักษร” อัตโนมัติ</div>`+
+    imgField('sb_header',SITE.header,'รูป Header แบนเนอร์ (เหนือแท็บ) — ใช้เมื่อปิดแบนเนอร์ระบบ')+
+    field('ความสว่าง/มืดของแบนเนอร์',`<div style="display:flex;align-items:center;gap:10px">
+      <input type="range" id="sb_hbright" min="30" max="140" value="${SITE.headerBright}" style="flex:1">
+      <span id="sb_hbright_v" style="min-width:42px;text-align:right;font-weight:600;color:var(--primary)">${SITE.headerBright}%</span>
+    </div>`)+
+    `<div class="color-row">
+      ${field('สีหลัก',`<input type="color" id="sb_primary" value="${SITE.primary}">`)}
+      ${field('สีรอง',`<input type="color" id="sb_accent" value="${SITE.accent}">`)}
+    </div>`+
+    field('ฟอนต์หัวข้อ',`<select id="sb_font">${['Mitr','Sarabun','Kanit','Bai Jamjuree','Chakra Petch'].map(f=>`<option ${SITE.font===f?'selected':''}>${f}</option>`).join('')}</select>`)+
+    field('แอนิเมชันหน้าแรก',`<select id="sb_anim"><option value="1" ${SITE.anim?'selected':''}>เปิด</option><option value="0" ${!SITE.anim?'selected':''}>ปิด</option></select>`)+
+    `<div class="sb-hint">✨ ทุกการเปลี่ยนแปลงแสดงผลทันทีบนหน้าเว็บฝั่งซ้าย — กด “บันทึก” ด้านล่างเพื่อจัดเก็บถาวร</div>`
+  );
+}
+/* ---- หมวด: ประกาศสำคัญ ---- */
+function secAnnounce(){
+  return acc('announce','📢','ประกาศสำคัญ',
+    `<label style="display:flex;align-items:center;gap:8px;font-weight:500;cursor:pointer;margin-bottom:8px">
+       <input type="checkbox" id="sb_annon" ${SITE.announceOn?'checked':''} style="width:18px;height:18px;flex:0 0 auto"> เปิดแถบประกาศด้านบน</label>
+     <textarea id="sb_anntext" placeholder="พิมพ์ข้อความประกาศที่จะแสดงด้านบน...">${esc(SITE.announceText)}</textarea>
+     <div class="sb-hint">แถบสีเหลืองจะแสดงด้านบนทุกหน้า ผู้เข้าชมกดปิดชั่วคราวได้</div>`
+  );
+}
+/* ---- หมวด: แท็บเมนู (จัดลำดับ/เปลี่ยนชื่อ/ลบ/เพิ่ม) ---- */
+function secTabs(){
+  let rows='';
+  TABS.forEach((t,idx)=>{
+    const active=activeTab&&activeTab.id===t.id;
+    const typeLab=(TAB_KINDS[t.type]&&TAB_KINDS[t.type].label)||t.type;
+    const isHome=t.type==='home';
+    rows+=`<div class="sb-tabrow${active?' is-active':''}" data-tid="${t.id}">
+      <button class="tact" data-mv="up" data-id="${t.id}" ${idx===0?'disabled':''} title="เลื่อนขึ้น">▲</button>
+      <button class="tact" data-mv="down" data-id="${t.id}" ${idx===TABS.length-1?'disabled':''} title="เลื่อนลง">▼</button>
+      <input class="tname" data-ren="${t.id}" value="${attr(t.title)}">
+      <span class="ttype">${esc(typeLab)}</span>
+      <button class="tact del" data-deltab="${t.id}" ${isHome?'disabled':''} title="${isHome?'ลบหน้าหลักไม่ได้':'ลบแท็บ'}">✕</button>
+    </div>`;
+  });
+  const body=rows+
+    `<div class="sb-hint">คลิกชื่อแท็บเพื่อแก้ไข • ▲▼ จัดลำดับ • ✕ ลบ</div>
+     <div style="border-top:1px dashed var(--line);margin:6px 0 10px"></div>
+     <input type="text" id="sb_newtab" placeholder="ชื่อแท็บใหม่" style="margin-bottom:8px">
+     <select id="sb_newtype" style="margin-bottom:8px">
+       <option value="content">เนื้อหาอิสระ (บล็อกครบเหมือนหน้าหลัก)</option>
+       <option value="cards">การ์ด/รายชื่อ</option>
+       <option value="links">ลิงก์/ฟอร์ม</option>
+       <option value="files">เอกสาร/ไฟล์ (PDF/Word/Excel)</option>
+       <option value="gallery">ภาพกิจกรรม</option>
+       <option value="news">ข่าว/ประกาศ</option>
+     </select>
+     <button class="sb-addtab" id="sb_addtab">+ เพิ่มแท็บใหม่</button>`;
+  return acc('tabs','🗂️','แท็บเมนู',body);
+}
+/* ---- หมวด: เนื้อหาในแท็บปัจจุบัน ---- */
+function secContent(){
+  const name=activeTab?activeTab.title:'-';
+  const lab=activeTab?addLabelForTab(activeTab.type):'';
+  return acc('content','🧩','เนื้อหาในแท็บนี้',
+    `<div class="sb-ctx"><div class="lab">กำลังแก้ไขแท็บ</div><div class="nm" id="sb_ctx_tab">${esc(name)}</div></div>`+
+    (activeTab?`<button class="sb-btn primary" id="sb_addcontent">${lab}</button>`:'')+
+    `<div class="sb-hint">🖱️ แก้แบบเห็นผลทันที (WYSIWYG): เลื่อนดูหน้าเว็บฝั่งซ้าย แล้วกดปุ่ม “แก้ไข/ลบ” ที่อยู่บนแต่ละรายการได้เลย</div>`
+  );
+}
+/* ---- หมวด: ความปลอดภัย & การเชื่อมต่อ ---- */
+/* ---- หมวด: ความปลอดภัย & การเชื่อมต่อ ---- */
+function secConnect(){
+  const fbWarn = (Store.mode==='memory')
+    ? `<div class="sb-hint" style="background:#fff7e6;border-color:#f0d9a0;color:#7a5c10">⚠️ ยังไม่ได้ตั้งค่า Firebase — ขณะนี้เป็นโหมดสาธิต ข้อมูลจะไม่ถูกบันทึกถาวร</div>`
+    : `<div class="sb-hint" style="background:#e9f8ef;border-color:#b5e6c9;color:#1c6b3f">✅ เชื่อมต่อ Firebase แล้ว — ข้อมูลถูกบันทึกถาวร</div>`;
+  return acc('connect','🔐','ความปลอดภัย & การเชื่อมต่อ',
+    fbWarn+
+    field('PIN ผู้ดูแล',`<input type="text" id="sb_pin" value="${attr(SITE.pin)}">`,'ความปลอดภัยจริงต้องตั้งที่ Firestore Rules ด้วย')+
+    field('โฟลเดอร์ Drive (รูปภาพ)',`<input type="text" id="sb_drive" value="${attr(SITE.driveFolderId)}" placeholder="Folder ID">`)+
+    field('โฟลเดอร์ Drive (ไฟล์เอกสาร)',`<input type="text" id="sb_docdrive" value="${attr(SITE.docFolderId)}" placeholder="เว้นว่าง = ใช้โฟลเดอร์รูป">`)+
+    field('Apps Script Web App URL',`<input type="url" id="sb_gas" value="${attr(SITE.gasUploadUrl)}" placeholder="https://script.google.com/macros/s/.../exec">`)+
+    field('Google Sheet ID (ไม่บังคับ)',`<input type="text" id="sb_sheet" value="${attr(SITE.sheetId)}">`)
+  );
+}
+/* ---- หมวด: ล้างข้อมูลตามช่วงเวลา (Danger zone) ---- */
+const CLEAN_COLS=[
+  ['news','ข่าว/ประกาศ'],
+  ['personnel','บุคลากร'],
+  ['items','การ์ด/รายชื่อ (แท็บที่เพิ่มเอง)'],
+  ['linkitems','ลิงก์/ฟอร์ม'],
+  ['fileitems','เอกสาร/ไฟล์'],
+  ['galleryitems','ภาพกิจกรรม'],
+  ['homeblocks','บล็อกหน้าหลัก'],
+  ['tabblocks','บล็อกเนื้อหา (แท็บที่เพิ่มเอง)']
+];
+function secCleanup(){
+  return acc('cleanup','🧹','ล้างข้อมูล (ระวัง)',
+    `<div class="sb-hint" style="background:#fdecea;border-color:#f5b5ae;color:#9b2c22">⚠️ การล้างข้อมูลเป็นการลบถาวร กู้คืนไม่ได้ — โปรดเลือกให้ถูกต้อง</div>`+
+    field('หมวดที่จะล้าง',`<select id="cl_col">${CLEAN_COLS.map(c=>`<option value="${c[0]}">${c[1]}</option>`).join('')}<option value="__all__">⚠️ ทุกหมวด</option></select>`)+
+    field('ช่วงเวลา',`<select id="cl_range">
+       <option value="30">เก่ากว่า 30 วัน</option>
+       <option value="90">เก่ากว่า 90 วัน</option>
+       <option value="180">เก่ากว่า 180 วัน</option>
+       <option value="365">เก่ากว่า 1 ปี</option>
+       <option value="before">ก่อนวันที่ที่เลือก…</option>
+       <option value="all">ทั้งหมดในหมวดนี้</option>
+     </select>`)+
+    `<div class="field" id="cl_datewrap" style="display:none"><label>ลบรายการก่อนวันที่</label><input type="date" id="cl_date"></div>`+
+    `<button class="sb-btn ghost" id="cl_run" style="border-color:#c0392b;color:#c0392b">🧹 ตรวจและล้างข้อมูล</button>`+
+    `<div class="sb-hint">หมายเหตุ: รายการที่ไม่มีข้อมูล “วันที่สร้าง” จะถูกล้างเฉพาะเมื่อเลือก “ทั้งหมด” • การล้าง “เอกสาร/ไฟล์” จะลบรายการบนเว็บ แต่ไฟล์ใน Google Drive ยังอยู่ (ลบเองภายหลังได้)</div>`
+  );
+}
+/* ---- ผูกอีเวนต์ของ Sidebar ---- */
+function bindSidebar(){
+  const sb=$('#sidebar');
+  $('#sbExit').onclick=exitEditing;
+  $('#sbSaveAll').onclick=saveSidebarSettings;
+  // เปิด/ปิด accordion + จำสถานะ
+  sb.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.toggle, sec=sb.querySelector(`[data-acc="${id}"]`);
+    const open=!sec.classList.contains('open'); sec.classList.toggle('open',open); SB_OPEN[id]=open;
+  });
+  // แสดงตัวอย่างสด (live preview)
+  ['sb_name','sb_school','sb_tag','sb_anntext'].forEach(id=>{const e=$('#'+id); if(e)e.oninput=applySidebarLive;});
+  ['sb_primary','sb_accent','sb_anim'].forEach(id=>{const e=$('#'+id); if(e)e.oninput=applySidebarLive;});
+  ['sb_hbg','sb_htext'].forEach(id=>{const e=$('#'+id); if(e)e.oninput=applySidebarLive;});
+  const an=$('#sb_annon'); if(an)an.onchange=applySidebarLive;
+  const fo=$('#sb_font'); if(fo)fo.onchange=()=>{loadFont(fo.value);applySidebarLive();};
+  const hb=$('#sb_hbright'); if(hb)hb.oninput=()=>{const v=$('#sb_hbright_v'); if(v)v.textContent=hb.value+'%'; applySidebarLive();};
+  const hsx=$('#sb_headersys'); if(hsx)hsx.onchange=applySidebarLive;
+  // ช่องรูป: อัปโหลด + พิมพ์ลิงก์เองก็พรีวิวสด
+  ['sb_logo','sb_cover','sb_header'].forEach(id=>{ bindUpload(id); const e=$('#'+id); if(e)e.oninput=applySidebarLive; });
+  // แท็บ
+  sb.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>moveTab(b.dataset.id, b.dataset.mv==='up'?-1:1));
+  sb.querySelectorAll('[data-ren]').forEach(inp=>inp.onchange=()=>renameTab(inp.dataset.ren,inp.value));
+  sb.querySelectorAll('[data-deltab]').forEach(b=>{ if(!b.disabled) b.onclick=()=>{const t=TABS.find(x=>x.id===b.dataset.deltab); if(t) deleteTab(t);}; });
+  const at=$('#sb_addtab'); if(at)at.onclick=sbAddTab;
+  // เพิ่มเนื้อหาในแท็บปัจจุบัน
+  const ac=$('#sb_addcontent'); if(ac)ac.onclick=()=>{ if(window.matchMedia('(max-width:900px)').matches) sb.classList.remove('open'); addToActiveTab(); };
+  // ล้างข้อมูล
+  const clr=$('#cl_range'); if(clr) clr.onchange=()=>{ const w=$('#cl_datewrap'); if(w) w.style.display=clr.value==='before'?'block':'none'; };
+  const clb=$('#cl_run'); if(clb) clb.onclick=cleanupRun;
+}
+/* ---- เวลาสร้างของรายการ (ใช้กับการล้างตามช่วงเวลา) ---- */
+function itemTime(it){
+  if(it.createdAt) return it.createdAt;
+  if(it.date){ const t=Date.parse(it.date); if(!isNaN(t)) return t; }
+  if(typeof it.order==='number'){
+    if(it.order<0) return -it.order;            // order=-Date.now() (ของใหม่)
+    if(it.order>1e12) return it.order;          // order=Date.now() (ของเก่า)
+  }
+  return null;
+}
+/* ---- ประมวลผลการล้างข้อมูล ---- */
+async function cleanupRun(){
+  const colSel=$('#cl_col').value, range=$('#cl_range').value;
+  const cols = colSel==='__all__' ? CLEAN_COLS.map(c=>c[0]) : [colSel];
+  let cutoff=null;
+  if(range==='before'){ const d=$('#cl_date').value; if(!d){ toast('กรุณาเลือกวันที่'); return; } cutoff=Date.parse(d+'T23:59:59'); }
+  else if(range!=='all'){ cutoff=Date.now()-parseInt(range,10)*86400000; }
+  showUploading('กำลังตรวจรายการ…');
+  const targets=[];
+  try{
+    for(const c of cols){
+      const items=await Store.listCol(c);
+      items.forEach(it=>{
+        if(range==='all'){ targets.push({col:c,id:it.id}); return; }
+        const t=itemTime(it);
+        if(t!=null && t<cutoff) targets.push({col:c,id:it.id});
+      });
+    }
+  }finally{ hideUploading(); }
+  if(!targets.length){ toast('ไม่พบรายการที่ตรงเงื่อนไข'); return; }
+  const rangeLabel = range==='all' ? 'ทั้งหมดในหมวดที่เลือก'
+    : range==='before' ? ('ก่อนวันที่ '+$('#cl_date').value) : ('เก่ากว่า '+range+' วัน');
+  openModal('ยืนยันการล้างข้อมูล',
+    `<p>พบ <b style="color:#c0392b;font-size:18px">${targets.length}</b> รายการที่ตรงเงื่อนไข (${esc(rangeLabel)})<br>
+       การลบนี้ <b>ถาวร กู้คืนไม่ได้</b></p>
+     <div class="field"><label>พิมพ์คำว่า <b>ลบ</b> เพื่อยืนยัน</label>
+       <input type="text" id="cl_confirm" placeholder="ลบ" autocomplete="off"></div>`,
+    `<button class="btn ghost" onclick="closeModal()">ยกเลิก</button>
+     <button class="btn primary" id="cl_do" style="background:#c0392b">ลบถาวร ${targets.length} รายการ</button>`);
+  setTimeout(()=>{const e=$('#cl_confirm'); if(e)e.focus();},50);
+  $('#cl_do').onclick=async()=>{
+    if(($('#cl_confirm').value||'').trim()!=='ลบ'){ toast('พิมพ์ "ลบ" เพื่อยืนยัน'); return; }
+    closeModal(); showUploading('กำลังล้างข้อมูล…');
+    let n=0;
+    try{ for(const t of targets){ try{ await Store.removeCol(t.col,t.id); n++; setUploading('กำลังล้างข้อมูล… '+n+'/'+targets.length); }catch(e){} } }
+    finally{ hideUploading(); }
+    toast('ล้างข้อมูลแล้ว '+n+' รายการ'); renderMain();
+  };
+}
+/* ---- แสดงตัวอย่างสด (ยังไม่บันทึกถาวร) ---- */
+function applySidebarLive(){
+  const g=id=>{const e=document.getElementById(id);return e?e.value:undefined;};
+  if(!document.getElementById('sb_name')) { applyTheme(); return; }
+  SITE.name=g('sb_name'); SITE.school=g('sb_school'); SITE.tagline=g('sb_tag');
+  SITE.logo=g('sb_logo'); SITE.cover=g('sb_cover'); SITE.header=g('sb_header');
+  SITE.headerBright=parseInt(g('sb_hbright'),10)||100;
+  const hs=document.getElementById('sb_headersys'); if(hs) SITE.headerSys=hs.checked;
+  const hbg=document.getElementById('sb_hbg'); if(hbg) SITE.headerBgColor=hbg.value;
+  const htx=document.getElementById('sb_htext'); if(htx) SITE.headerTextColor=htx.value;
+  SITE.primary=g('sb_primary'); SITE.accent=g('sb_accent');
+  SITE.font=g('sb_font'); SITE.anim=g('sb_anim')==='1';
+  const an=document.getElementById('sb_annon'); SITE.announceOn=an?an.checked:SITE.announceOn;
+  SITE.announceText=g('sb_anntext'); announceDismissed=false;
+  applyTheme();
+}
+/* ---- บันทึกถาวร (เขียนลง Firestore/หน่วยความจำ) ---- */
+async function saveSidebarSettings(){
+  applySidebarLive();
+  SITE.name=(SITE.name||'').trim()||'กลุ่มบริหารงาน';
+  SITE.school=(SITE.school||'').trim(); SITE.tagline=(SITE.tagline||'').trim();
+  SITE.logo=(SITE.logo||'').trim(); SITE.cover=(SITE.cover||'').trim(); SITE.header=(SITE.header||'').trim();
+  SITE.announceText=(SITE.announceText||'').trim();
+  const get=(id,def)=>{const e=$('#'+id);return e?e.value.trim():def;};
+  SITE.pin=get('sb_pin',SITE.pin)||ADMIN_PIN_DEFAULT;
+  SITE.driveFolderId=get('sb_drive',SITE.driveFolderId);
+  SITE.docFolderId=get('sb_docdrive',SITE.docFolderId);
+  SITE.gasUploadUrl=get('sb_gas',SITE.gasUploadUrl);
+  SITE.sheetId=get('sb_sheet',SITE.sheetId);
+  loadFont(SITE.font);
+  await Store.setDoc('config/site',SITE);
+  applyTheme(); renderMain(); toast('บันทึกการตั้งค่าแล้ว ✓');
+}
+/* ---- จัดการแท็บจาก Sidebar ---- */
+function moveTab(id,dir){
+  const ids=TABS.map(t=>t.id); const i=ids.indexOf(id), j=i+dir;
+  if(i<0||j<0||j>=ids.length) return;
+  const tmp=ids[i]; ids[i]=ids[j]; ids[j]=tmp;
+  reorderTabs(ids).then(()=>renderSidebar());
+}
+async function renameTab(id,title){
+  title=(title||'').trim()||'แท็บ';
+  const t=TABS.find(x=>x.id===id); if(!t) return;
+  t.title=title; await Store.updateCol('tabs',id,{title});
+  renderTabs(); if(activeTab&&activeTab.id===id){ renderMain(); const lab=$('#sb_ctx_tab'); if(lab)lab.textContent=title; }
+  toast('เปลี่ยนชื่อแท็บแล้ว');
+}
+async function sbAddTab(){
+  const title=($('#sb_newtab').value||'').trim()||'แท็บใหม่';
+  const type=$('#sb_newtype').value;
+  const order=(Math.max(0,...TABS.map(t=>t.order||0)))+1;
+  showUploading('กำลังสร้างแท็บใหม่…');
+  try{
+    const id=await Store.addCol('tabs',{title,type,order});
+    await loadTabs(); activeTab=TABS.find(t=>t.id===id)||activeTab;
+    renderTabs(); await renderMain(); renderSidebar();
+  }finally{ hideUploading(); }
+  toast('เพิ่มแท็บแล้ว');
+}
+/* ---- เพิ่มเนื้อหาตามชนิดของแท็บปัจจุบัน ---- */
+function addToActiveTab(){
+  if(!activeTab) return;
+  const type=activeTab.type, k=TAB_KINDS[type]||{};
+  if(type==='home'){ blockForm('homeblocks',null,HOME_TYPES); return; }
+  if(k.kind==='content'){ blockForm('tabblocks',null,HOME_TYPES); return; }
+  if(k.kind==='card'){ cardForm(k.store.col,null); return; }
+  if(k.kind==='link'){ linkForm(k.store.col,null); return; }
+  if(k.kind==='file'){ fileForm(k.store.col,null); return; }
+  if(k.kind==='gallery'){ blockForm(k.store.col,null,GALLERY_TYPES); return; }
+  if(k.kind==='news'){ newsForm('news',null); return; }
+}
+function loadFont(name){
+  const id='f_'+name.replace(/\s/g,'');
+  if(document.getElementById(id))return;
+  const l=document.createElement('link'); l.id=id; l.rel='stylesheet';
+  l.href='https://fonts.googleapis.com/css2?family='+name.replace(/\s/g,'+')+':wght@400;500;600&display=swap';
+  document.head.appendChild(l);
+}
+
+/* ============================================================
+   อัปโหลดรูปผ่าน Apps Script -> Google Drive
+   (ใช้ Content-Type text/plain เพื่อเลี่ยง CORS preflight)
+   ============================================================ */
+function toBase64(file){return new Promise((res,rej)=>{const r=new FileReader();
+  r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});}
+
+// ★ overlay แอนิเมชัน "กำลังอัปโหลด" (นับซ้อนได้ ไม่กระพริบตอนอัปโหลดหลายไฟล์)
+let UP_COUNT=0;
+function showUploading(text){ UP_COUNT++; if(text)$('#upText').textContent=text; $('#upOverlay').classList.add('show'); }
+function setUploading(text){ if(text)$('#upText').textContent=text; }
+function hideUploading(){ UP_COUNT=Math.max(0,UP_COUNT-1); if(UP_COUNT===0)$('#upOverlay').classList.remove('show'); }
+
+// ★ แกนกลางการอัปโหลด (ใช้ทั้งรูปและไฟล์เอกสาร)
+//   1) POST ขึ้น GAS แบบ mode:'no-cors' (ส่งได้ชัวร์ ไม่ติด CORS แต่ "อ่าน response ไม่ได้")
+//   2) GAS อัปโหลดไฟล์ + จดลิงก์ไว้ใน CacheService โดยอ้างด้วย key
+//   3) frontend วน GET ดึงลิงก์กลับด้วย key เดิม (GET ข้าม origin อ่านได้ปกติ)
+//   คืนค่า object {id?, url?} หรือ null
+async function gasUploadRaw(file, folderId, label){
+  if(!SITE.gasUploadUrl){ toast('ยังไม่ตั้งค่าการอัปโหลด (Apps Script URL)'); return null; }
+  if(!folderId){ toast('ยังไม่ตั้งค่าโฟลเดอร์ Drive'); return null; }
+  showUploading(label||'กำลังอัปโหลด…');
+  try{
+    const data=await toBase64(file);
+    const key=(window.crypto&&crypto.randomUUID)?crypto.randomUUID()
+              :(Date.now().toString(36)+Math.random().toString(36).slice(2));
+    // (1) ส่งไฟล์ — no-cors จึงไม่ต้องอ่าน response (กันปัญหา CORS ใน iframe Google Sites)
+    try{
+      await fetch(SITE.gasUploadUrl,{method:'POST',mode:'no-cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({key,filename:file.name,mimeType:file.type,data,folderId})});
+    }catch(e){ /* no-cors โดยปกติไม่ throw */ }
+    // (2) วนอ่านลิงก์กลับจาก GAS ด้วย key (สูงสุด ~22 วินาที)
+    for(let i=0;i<18;i++){
+      await new Promise(r=>setTimeout(r,1200));
+      try{
+        const r=await fetch(SITE.gasUploadUrl+'?key='+encodeURIComponent(key)+'&t='+Date.now());
+        const j=await r.json();
+        if(j&&j.error){ console.error('GAS error:',j.error); toast('อัปโหลดล้มเหลว: '+j.error); return null; }
+        if(j&&(j.url||j.id)) return j;
+      }catch(e){ /* ยังไม่พร้อม ลองใหม่ */ }
+    }
+    return null;
+  } finally { hideUploading(); }
+}
+
+// อัปโหลด "รูปภาพ" -> คืนลิงก์ thumbnail ที่เสถียร
+async function uploadImage(file,label){
+  const j=await gasUploadRaw(file, SITE.driveFolderId, label||'กำลังอัปโหลดรูป…');
+  if(!j){ toast('อัปโหลดช้า/ล้มเหลว — ลองใหม่ หรือวางลิงก์รูปเอง'); return null; }
+  const id=j.id||driveImgId(j.url||'');
+  if(id) return 'https://drive.google.com/thumbnail?id='+id+'&sz=w1600';
+  return j.url||null;
+}
+
+// อัปโหลด "ไฟล์เอกสาร" (PDF/Word/Excel) -> คืน {id, name, size, type}
+// ใช้โฟลเดอร์เอกสารแยก (docFolderId) ถ้าเว้นว่างจะใช้โฟลเดอร์รูปแทน
+async function uploadDoc(file){
+  const folder=SITE.docFolderId||SITE.driveFolderId;
+  const j=await gasUploadRaw(file, folder, 'กำลังอัปโหลดไฟล์…');
+  if(!j){ toast('อัปโหลดไฟล์ช้า/ล้มเหลว — ลองใหม่อีกครั้ง'); return null; }
+  const id=j.id||driveImgId(j.url||'');   // ดึง File ID จากลิงก์ที่ GAS ส่งกลับ (ไม่ต้องแก้ GAS)
+  if(id) return {id, name:file.name, size:file.size||0, type:file.type||''};
+  toast('อัปโหลดไฟล์ล้มเหลว'); return null;
+}
+
+/* ============================================================
+   utilities
+   ============================================================ */
+function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function attr(s){return esc(s).replace(/"/g,'&quot;');}
+function formatDate(d){ if(!d)return''; try{return new Date(d).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});}catch(e){return d;} }
+// แปลงลิงก์ Google Drive ทุกรูปแบบ -> endpoint thumbnail ที่แสดงใน <img> ได้จริง
+// (ลิงก์ตรงทั่วไปที่ไม่ใช่ Drive จะคืนค่าตามเดิม)
+// ★ ใช้ drive.google.com/thumbnail เป็นหลัก เพราะเสถียรสุด แสดงได้แม้ไฟล์เพิ่งอัปโหลด
+function normImg(url){
+  if(!url) return '';
+  const id=driveImgId(url);
+  if(id) return 'https://drive.google.com/thumbnail?id='+id+'&sz=w1600';
+  return url;
+}
+// เติม https:// ให้ลิงก์ที่พิมพ์มาไม่ครบ
+function normUrl(u){ if(!u) return ''; return /^https?:\/\//i.test(u)?u:'https://'+u; }
+// ดึง FILE_ID จากลิงก์ Drive ทุกแบบ
+function driveImgId(url){
+  if(!url) return '';
+  let m;
+  if(m=url.match(/lh3\.googleusercontent\.com\/d\/([-\w]+)/)) return m[1];
+  if(m=url.match(/\/file\/d\/([-\w]+)/)) return m[1];
+  if(m=url.match(/thumbnail\?id=([-\w]+)/)) return m[1];
+  if(m=url.match(/[?&]id=([-\w]+)/)) return m[1];
+  if(m=url.match(/\/d\/([-\w]+)/)) return m[1];
+  return '';
+}
+// ★ รายการลิงก์ที่จะลองโหลดตามลำดับความเสถียร (ยกวิธีจากระบบตัวอย่างที่ได้ผล)
+//   1) drive thumbnail — แสดงได้จริงแม้ไฟล์เพิ่งอัปโหลด (เสถียรสุด)
+//   2) lh3.googleusercontent — สำรองตัวที่ 1
+//   3) uc?export=view — สำรองตัวที่ 2
+//   4) ลิงก์เดิม — เผื่อเป็นลิงก์ตรงที่ไม่ใช่ Drive
+function driveImgCandidates(url){
+  const id=driveImgId(url);
+  if(!id) return [url];
+  return [
+    'https://drive.google.com/thumbnail?id='+id+'&sz=w1600',
+    'https://lh3.googleusercontent.com/d/'+id+'=w1600',
+    'https://drive.google.com/uc?export=view&id='+id,
+    url
+  ];
+}
+// สร้างแท็ก <img> ที่ทนต่อการบล็อกของ Google:
+// - referrerpolicy="no-referrer" กันการบล็อก hotlink
+// - ถ้าลิงก์หลักโหลดไม่ขึ้น จะไล่ลองลิงก์สำรองทีละตัวอัตโนมัติ (onerror)
+function imgTag(url,cls){
+  if(!url) return '';
+  const list=driveImgCandidates(url);
+  const src=list[0];
+  const rest=list.slice(1).join('|');   // เก็บลิงก์สำรองที่เหลือไว้ใน data-fallbacks
+  return `<img ${cls?`class="${cls}" `:''}src="${src}" data-fallbacks="${attr(rest)}" referrerpolicy="no-referrer" loading="lazy" onerror="imgErr(this)" alt="">`;
+}
+// ลองลิงก์สำรองตัวถัดไป; ถ้าหมดแล้วยังไม่ขึ้น ค่อยซ่อนรูป (ปล่อยให้พื้นหลัง placeholder โชว์แทน)
+function imgErr(el){
+  const raw=el.getAttribute('data-fallbacks')||'';
+  const list=raw.split('|').filter(Boolean);
+  if(list.length===0){ el.removeAttribute('data-fallbacks'); el.style.display='none'; return; }
+  const next=list.shift();
+  el.setAttribute('data-fallbacks', list.join('|'));
+  el.src=next;
+}
+// แปลงช่อง embed: ถ้าวาง "โค้ด iframe เต็ม" มา จะดึง src ออกมาให้ ถ้าวาง URL ตรงๆ ก็ใช้เลย
+function embedUrl(val){
+  if(!val) return '';
+  // ถ้าวางโค้ด <iframe ... src="..."> มา ให้ดึง src ออกมาก่อน
+  let m=val.match(/src=["']([^"']+)["']/i);
+  let u = m ? m[1] : normUrl(val.trim());
+
+  // --- YouTube (watch / youtu.be / shorts / live / embed) -> /embed/VIDEO_ID ---
+  let yt =
+      u.match(/youtu\.be\/([\w-]{6,})/) ||
+      u.match(/youtube\.com\/(?:watch\?[^#]*\bv=|embed\/|shorts\/|live\/)([\w-]{6,})/) ||
+      u.match(/youtube\.com\/v\/([\w-]{6,})/);
+  if(yt){
+    let id=yt[1];
+    let list=u.match(/[?&]list=([\w-]+)/);   // เก็บเพลย์ลิสต์ถ้ามี
+    return 'https://www.youtube.com/embed/'+id + (list?('?list='+list[1]):'');
+  }
+  // เผื่อวางเฉพาะรหัสคลิป 11 ตัว
+  if(/^[\w-]{11}$/.test(val.trim())) return 'https://www.youtube.com/embed/'+val.trim();
+
+  // --- Vimeo ---
+  let vm=u.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if(vm) return 'https://player.vimeo.com/video/'+vm[1];
+
+  // --- Google Drive (วิดีโอ/ไฟล์) -> /preview ---
+  if(/drive\.google\.com/.test(u)){
+    const id=driveImgId(u);
+    if(id) return 'https://drive.google.com/file/d/'+id+'/preview';
+  }
+
+  // --- Google Forms -> เติม embedded=true ---
+  if(/docs\.google\.com\/forms/.test(u) && !/embedded=true/.test(u))
+    u += (u.includes('?')?'&':'?')+'embedded=true';
+
+  // Google Maps / อื่น ๆ : ใช้ตามเดิม (ส่วนใหญ่ฝังได้อยู่แล้ว)
+  return u;
+}
+
+// ดึงรหัสคลิป YouTube จากลิงก์ทุกแบบ (คืน '' ถ้าไม่ใช่ YouTube)
+function ytId(val){
+  if(!val) return '';
+  const m=val.match(/src=["']([^"']+)["']/i); const s=m?m[1]:val;
+  const y=s.match(/youtu\.be\/([\w-]{6,})/)||
+          s.match(/youtube(?:-nocookie)?\.com\/(?:watch\?[^#]*\bv=|embed\/|shorts\/|live\/|v\/)([\w-]{6,})/);
+  if(y) return y[1];
+  if(/^[\w-]{11}$/.test(val.trim())) return val.trim();
+  return '';
+}
+// สร้าง HTML สำหรับฝังสื่อ: YouTube ใช้ facade (ภาพปก+ปุ่มเล่น) ที่ทนต่อ error 153,
+// สื่ออื่น (ฟอร์ม/แผนที่/ไดรฟ์/Vimeo) ใช้ iframe ตามปกติ
+function embedHtml(val){
+  if(!val) return '';
+  const id=ytId(val);
+  if(id){
+    const thumb='https://i.ytimg.com/vi/'+id+'/hqdefault.jpg';
+    return `<div class="yt-box"><div class="yt-facade" data-yt="${id}" style="background-image:url('${thumb}')">
+      <button class="yt-play" aria-label="เล่นวิดีโอ"></button>
+      <a class="yt-open" href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener">เปิดบน YouTube ↗</a>
+    </div></div>`;
+  }
+  return `<iframe src="${embedUrl(val)}" loading="lazy" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>`;
+}
+// กดภาพปก -> โหลด player จริง (user gesture + โดเมน nocookie ลดโอกาส error 153)
+function bindEmbeds(scope){
+  scope.querySelectorAll('.yt-facade').forEach(el=>{
+    el.onclick=(e)=>{
+      if(e.target.closest('.yt-open')) return;   // กดลิงก์ "เปิดบน YouTube" ไม่ต้องเล่นในหน้า
+      const id=el.dataset.yt;
+      el.outerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0" loading="lazy" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>`;
+    };
+  });
+}
+let toastTimer;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2200);}
+
+/* ============================================================
+   เริ่มต้นแอป
+   ============================================================ */
+$('#enterBtn').onclick=()=>$('#landing').classList.add('hide');
+// รองรับ ?view=app เพื่อข้าม Landing (เผื่อเอา Landing ไปไว้คนละหน้า Google Site)
+if(new URLSearchParams(location.search).get('view')==='app'){ $('#landing').classList.add('hide'); }
+
+// คำนวณตำแหน่งตรึง: แท็บอยู่ใต้แถบชื่อพอดี (เผื่อแถบผู้ดูแลด้วย)
+function stickyLayout(){
+  const eb=$('#editbar'), tb=document.querySelector('.topbar'), tab=$('#tabbar');
+  if(!tb||!tab) return;
+  const ebH=(eb&&getComputedStyle(eb).display!=='none')?eb.offsetHeight:0;
+  tb.style.top=ebH+'px';
+  tab.style.top=(ebH+tb.offsetHeight)+'px';
+}
+window.addEventListener('resize',stickyLayout);
+// คำนวณ marquee ใหม่เมื่อความกว้างเปลี่ยน (เปิด/ปิดแผง, หมุนจอ) แบบหน่วงเวลา
+let mqResizeTimer;
+window.addEventListener('resize',()=>{ clearTimeout(mqResizeTimer);
+  mqResizeTimer=setTimeout(()=>initMarquees($('#main')||document),200); });
+
+(async function init(){
+  // โหมดสาธิต: ยังไม่ได้ใส่ config หรือ Firebase init ไม่สำเร็จ
+  if(Store.mode==='memory'){
+    seedDemo();
+    const s=$('#status'); s.textContent='⚠️ โหมดสาธิต: ยังไม่ได้ใส่ Firebase config — ข้อมูลจะไม่ถูกบันทึกถาวร'; s.classList.add('show');
+  }
+  await loadSite();
+  // ตรวจหลัง loadSite: ถ้า fallback ลง memory กลางคัน (Firestore Rules ยังไม่พร้อม)
+  if(HAS_FB && Store.mode==='memory'){
+    seedDemo();
+    const s=$('#status');
+    s.textContent='⚠️ เชื่อมต่อ Firestore ไม่ได้ (Rules อาจยังไม่ได้ตั้งค่า) — กำลังแสดงในโหมดสาธิต ข้อมูลจะไม่ถูกบันทึกถาวร';
+    s.classList.add('show');
+  }
+  applyTheme();
+  await loadTabs();
+  activeTab=TABS[0]||null;
+  renderTabs();
+  renderMain();
+  stickyLayout(); setTimeout(stickyLayout,300);
+})();
+</script>
+
+<!--
+================================================================
+  ภาคผนวก ก: Apps Script (doPost + doGet) สำหรับอัปโหลดรูปขึ้น Google Drive
+  วิธีใช้: เปิด script.google.com > New project > วางโค้ดนี้ >
+  Deploy > New deployment > type: Web app >
+  Execute as: Me, Who has access: Anyone > นำ URL ไปวางที่
+  "โหมดผู้ดูแล > ตั้งค่า > Apps Script Web App URL" (ไม่ต้องแก้ในโค้ด)
+
+  ★★★ สำคัญ: ถ้าเคย Deploy เวอร์ชันเก่าไว้ ต้อง "Manage deployments > แก้ไข >
+      New version > Deploy" ใหม่ทุกครั้ง ไม่งั้น doGet ใหม่จะยังไม่ทำงาน ★★★
+
+  หลักการ (เหมือนระบบตัวอย่างที่ได้ผล):
+  - doPost: รับไฟล์ -> อัปโหลด -> จดลิงก์ไว้ใน Cache โดยอ้างด้วย key (อายุ 6 ชม.)
+  - doGet?key=...: ให้ frontend มาอ่านลิงก์กลับด้วย key เดิม
+  (frontend ส่งแบบ no-cors จึงไม่อ่าน response ของ doPost โดยตรง -> เลี่ยงปัญหา CORS)
+================================================================
+
+// ★★★ รันฟังก์ชันนี้ "ครั้งเดียว" ในเอดิเตอร์ Apps Script เพื่ออนุญาตสิทธิ์ดึงข่าว ★★★
+//   วิธี: เลือกฟังก์ชัน authorizeOnce ที่แถบบน > กด Run (▶)
+//   จะมีหน้าต่างขออนุญาตเด้งขึ้น > Review permissions > เลือกบัญชี >
+//   "Advanced" > ไปต่อ > Allow (ต้องเห็นรายการ "Connect to an external service")
+//   ทำครั้งเดียวพอ จากนั้นการดึงข่าวผ่าน Web App จะใช้งานได้
+function authorizeOnce(){
+  var r = UrlFetchApp.fetch('https://www.google.com/', {muteHttpExceptions:true});
+  Logger.log('OK external_request granted, code=' + r.getResponseCode());
+  return r.getResponseCode();
+}
+
+function doPost(e){
+  try{
+    var p = JSON.parse(e.postData.contents);
+    var folder = DriveApp.getFolderById(p.folderId);
+    var bytes  = Utilities.base64Decode(p.data);
+    var blob   = Utilities.newBlob(bytes, p.mimeType, p.filename);
+    var file   = folder.createFile(blob);
+    // ตั้งแชร์เป็นสาธารณะ (ห่อ try ไว้ เผื่อองค์กรล็อกการแชร์ จะได้ไม่ทำให้ทั้งฟังก์ชันพัง)
+    // ★ ใช้ ANYONE (ไม่ใช่ ANYONE_WITH_LINK) เพื่อให้ endpoint thumbnail แสดงรูปได้ชัวร์สุด
+    try { file.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.VIEW); }
+    catch(shareErr) {
+      try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch(e2) {}
+    }
+    var id  = file.getId();
+    var url = "https://drive.google.com/thumbnail?id=" + id + "&sz=w1600";
+    // ★ จดลิงก์ไว้ให้ frontend อ่านกลับด้วย key (Cache อายุ 6 ชม. ล้างเองอัตโนมัติ)
+    if (p.key) {
+      CacheService.getScriptCache().put('up_' + p.key, url, 21600);
+    }
+    return ContentService
+      .createTextOutput(JSON.stringify({id:id, url:url}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }catch(err){
+    return ContentService.createTextOutput(JSON.stringify({error:String(err)}))
+                         .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e){
+  var p = (e && e.parameter) ? e.parameter : {};
+
+  // ★ ดึงข่าว RSS จากเว็บอื่น (ข้ามปัญหา CORS) + แคชกันต้นทาง throttle ช่วงคนใช้เยอะ
+  //   เรียกโดย: <GAS_URL>?feed=<RSS_URL ที่ encode แล้ว>
+  //   กลไก: ถ้ามีแคชสด (10 นาที) คืนทันที | ดึงใหม่สำเร็จ -> แคชสด 10 นาที + last-good 6 ชม.
+  //         ดึงไม่ได้/ไม่ใช่ฟีด -> คืน last-good ที่เคยดึงได้ (จึงไม่พังช่วงบ่าย)
+  if (p.feed) {
+    var XML = function(s){ return ContentService.createTextOutput(s).setMimeType(ContentService.MimeType.XML); };
+    var cache = CacheService.getScriptCache();
+    var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, p.feed);
+    var hk=''; for (var i=0;i<digest.length;i++){ hk += ('0'+(digest[i]&255).toString(16)).slice(-2); }
+    var FRESH='ff_'+hk, LAST='fl_'+hk;
+    var putSafe = function(k,v,sec){ try{ cache.put(k,v,sec); }catch(e){} };  // กันค่าเกิน 100KB
+    // ★★★ สำคัญ: ถ้า URL มีตัวอักษรที่ไม่ใช่ ASCII (เช่นภาษาไทยใน Google News q=การศึกษา)
+    //     ต้อง encode ก่อน ไม่งั้น UrlFetchApp จะโยน "Invalid argument" -> ดึงไม่สำเร็จทุกครั้ง
+    //     encodeURI จะแปลงเฉพาะตัวที่ไม่ปลอดภัย และคงเครื่องหมาย & = : / ? ไว้
+    var feedUrl = p.feed;
+    try { if (/[^\x00-\x7F]/.test(feedUrl)) feedUrl = encodeURI(feedUrl); } catch(e){}
+    // ตรวจว่าเป็นฟีด RSS/Atom จริง (ไม่ใช่หน้า consent/HTML) ก่อนนำไปแคช
+    var isFeed = function(s){
+      return s && (s.indexOf('<item') >= 0 || s.indexOf('<entry') >= 0
+                || s.indexOf('<rss') >= 0 || s.indexOf('<feed') >= 0);
+    };
+
+    var fresh = cache.get(FRESH);
+    if (fresh) return XML(fresh);
+    try{
+      var resp = UrlFetchApp.fetch(feedUrl, {
+        muteHttpExceptions:true, followRedirects:true,
+        headers:{'User-Agent':'Mozilla/5.0 (compatible; SchoolSite/1.0)'}
+      });
+      var code = resp.getResponseCode();
+      var txt  = resp.getContentText();
+      if (code === 200 && isFeed(txt)){
+        putSafe(FRESH, txt, 600);     // แคชสด 10 นาที (ลดการเรียกต้นทาง)
+        putSafe(LAST,  txt, 21600);   // สำรอง 6 ชม. (ค่าสูงสุดของ CacheService)
+        return XML(txt);
+      }
+      var last = cache.get(LAST);
+      if (last) return XML(last);     // ต้นทางตอบไม่ใช่ฟีด -> ใช้ของเก่าที่เคยดึงได้
+      return XML('<rss><channel><error>HTTP '+code+'</error></channel></rss>');
+    }catch(err){
+      var last2 = cache.get(LAST);
+      if (last2) return XML(last2);   // ต้นทางล่ม -> ใช้ของเก่าที่ดึงได้
+      return XML('<rss><channel><error>'+err+'</error></channel></rss>');
+    }
+  }
+
+  // เดิม: อ่านลิงก์อัปโหลดกลับด้วย key
+  var out = {};
+  try{
+    var key = p.key || '';
+    if (key) {
+      out.url = CacheService.getScriptCache().get('up_' + key) || '';
+    }
+  }catch(err){ out.error = String(err); }
+  return ContentService.createTextOutput(JSON.stringify(out))
+                       .setMimeType(ContentService.MimeType.JSON);
+}
+
+================================================================
+  ภาคผนวก ข: Firestore Security Rules (วางใน Firebase Console > Firestore > Rules)
+  ระดับนี้: อ่านได้สาธารณะ + เขียนได้แต่จำกัดขนาด/โครงสร้าง กันมือบอน
+  *** เหมาะกับเนื้อหาภายในโรงเรียน ไม่ใช่ข้อมูลส่วนตัว/อ่อนไหว ***
+  *** PIN ฝั่งหน้าเว็บกั้นได้แค่ UI เท่านั้น ความปลอดภัยจริงอยู่ที่ Rules นี้ ***
+================================================================
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // อ่านได้ทุกคน (เว็บสาธารณะ)
+    match /{document=**} {
+      allow read: if true;
+    }
+
+    // ตั้งค่าเว็บ
+    match /config/site {
+      allow write: if request.resource.data.size() < 25;
+    }
+    // แท็บ
+    match /tabs/{id} {
+      allow write: if request.resource.data.keys().hasOnly(['title','type','order'])
+                   || request.method == 'delete';
+    }
+    // บุคลากร / การ์ด
+    match /personnel/{id} { allow write: if true; }
+    match /items/{id}     { allow write: if true; }
+    // ฟอร์ม / ลิงก์
+    match /forms/{id}     { allow write: if true; }
+    match /linkitems/{id} { allow write: if true; }
+    // ข่าว
+    match /news/{id}      { allow write: if true; }
+    // เนื้อหาอิสระ
+    match /content/{id}   { allow write: if true; }
+    // เอกสาร/ไฟล์
+    match /fileitems/{id} { allow write: if true; }
+    // ภาพกิจกรรม
+    match /galleryitems/{id} { allow write: if true; }
+    // บล็อกเนื้อหาหน้าหลัก
+    match /homeblocks/{id} { allow write: if true; }
+    // บล็อกเนื้อหาของแท็บเนื้อหาอิสระที่สร้างใหม่
+    match /tabblocks/{id} { allow write: if true; }
+    // แคชข่าว RSS (ระบบเขียนเองอัตโนมัติ)
+    match /feedcache/{id} { allow write: if true; }
+  }
+}
+-->
+</body>
+</html>
